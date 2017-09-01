@@ -1,7 +1,4 @@
-﻿// Copyright (c) .NET Foundation. All rights reserved.
-// Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
-
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -16,7 +13,7 @@ namespace HttpBatchHandler
         private readonly IHttpRequestFeature _requestFeature;
         private readonly ResponseFeature _responseFeature;
         private readonly ResponseStream _responseStream;
-        private readonly TaskCompletionSource<HttpApplicationContent> _responseTcs;
+        private readonly TaskCompletionSource<HttpApplicationResponseContent> _responseTcs;
         private bool _pipelineFinished;
 
         internal RequestState(IHttpRequestFeature requestFeature, IHttpContextFactory factory,
@@ -24,7 +21,7 @@ namespace HttpBatchHandler
         {
             _requestFeature = requestFeature;
             _factory = factory;
-            _responseTcs = new TaskCompletionSource<HttpApplicationContent>();
+            _responseTcs = new TaskCompletionSource<HttpApplicationResponseContent>();
             _requestAbortedSource = new CancellationTokenSource();
             _pipelineFinished = false;
 
@@ -47,7 +44,7 @@ namespace HttpBatchHandler
 
         public HttpContext Context { get; }
 
-        public Task<HttpApplicationContent> ResponseTask => _responseTcs.Task;
+        public Task<HttpApplicationResponseContent> ResponseTask => _responseTcs.Task;
 
         internal void AbortRequest()
         {
@@ -79,11 +76,11 @@ namespace HttpBatchHandler
             }
         }
 
-        private async Task<HttpApplicationContent> GenerateResponseAsync()
+        private async Task<HttpApplicationResponseContent> GenerateResponseAsync()
         {
             await _responseFeature.FireOnSendingHeadersAsync();
 
-            var response = new HttpApplicationContent
+            var response = new HttpApplicationResponseContent
             (
                 _requestFeature.Protocol,
                 Context.Response.StatusCode,

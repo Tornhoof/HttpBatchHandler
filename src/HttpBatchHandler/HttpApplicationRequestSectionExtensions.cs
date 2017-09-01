@@ -12,10 +12,13 @@ using Microsoft.Net.Http.Headers;
 
 namespace HttpBatchHandler
 {
-    public static class HttpApplicationSectionExtensions
+    public static class HttpApplicationRequestSectionExtensions
     {
         private const int DefaultBufferSize = 1024 * 4;
 
+        /// <summary>
+        ///     TODO: Better ways to parse the content-type?
+        /// </summary>
         public static async Task<HttpApplicationRequestSection> ReadNextHttpApplicationRequestSectionAsync(
             this MultipartReader reader, HostString hostString,
             CancellationToken cancellationToken = default(CancellationToken))
@@ -46,6 +49,7 @@ namespace HttpBatchHandler
             {
                 throw new InvalidDataException("Invalid request line.");
             }
+            // Validation of the request line parts necessary?
             var headers = await ReadHeadersAsync(bufferedStream, cancellationToken);
             var uri = BuildUri(hostString, requestLineParts[1]);
             return new HttpApplicationRequestSection
@@ -64,6 +68,9 @@ namespace HttpBatchHandler
             };
         }
 
+        /// <summary>
+        ///     TODO: Is manual query splitting the right way?
+        /// </summary>
         private static Uri BuildUri(HostString hostString, string pathAndQuery)
         {
             if (!hostString.HasValue)

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +19,9 @@ namespace HttpBatchHandler
             _match = match;
         }
 
+        /// <summary>
+        ///     TODO: Right way to call this middleware each and every time?
+        /// </summary>
         public Task Invoke(HttpContext httpContext)
         {
             if (!httpContext.Request.Path.Equals(_match))
@@ -29,11 +31,15 @@ namespace HttpBatchHandler
             return InvokeBatchAsync(httpContext);
         }
 
+        /// <summary>
+        ///     TODO: Customization (OnXYZCompleted/Started etc.)
+        ///     Is the Async Offload stuff and the rather complicated state and stream handling really necessary?
+        /// </summary>
         private async Task InvokeBatchAsync(HttpContext httpContext)
         {
             if (!httpContext.Request.IsMultiPartBatchRequest())
             {
-                httpContext.Response.StatusCode = (int) HttpStatusCode.BadRequest;
+                httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await httpContext.Response.WriteAsync("Invalid Content-Type.");
                 return;
             }
@@ -41,11 +47,12 @@ namespace HttpBatchHandler
             var boundary = httpContext.Request.ContentTypeBoundary();
             if (boundary == null)
             {
-                httpContext.Response.StatusCode = (int) HttpStatusCode.BadRequest;
+                httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await httpContext.Response.WriteAsync("Invalid Content-Type.");
                 return;
             }
             var reader = new MultipartReader(boundary.Value, httpContext.Request.Body);
+            // MultiPartContent should probably be replaced with something which can directly write into the response.Body
             using (var result = new MultipartContent("batch", "batch_" + Guid.NewGuid()))
             {
                 HttpApplicationRequestSection section;
@@ -83,7 +90,7 @@ namespace HttpBatchHandler
                         httpContext.Response.Headers.Add(httpContentHeader.Key, value);
                     }
                 }
-                httpContext.Response.StatusCode = 200;
+                httpContext.Response.StatusCode = StatusCodes.Status200OK;
                 await result.CopyToAsync(httpContext.Response.Body);
                 foreach (var response in result)
                 {

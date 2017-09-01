@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Http;
 
 namespace HttpBatchHandler
 {
-    public class HttpApplicationContent : HttpContent
+    public class HttpApplicationResponseContent : HttpContent
     {
-        private static readonly MediaTypeHeaderValue SContentType =
+        private static readonly MediaTypeHeaderValue ResponseContentType =
             MediaTypeHeaderValue.Parse("application/http; msgType=response");
 
         private static readonly char[] Crlf = "\r\n".ToCharArray();
@@ -21,7 +21,7 @@ namespace HttpBatchHandler
         private readonly int _statusCode;
 
 
-        public HttpApplicationContent(string httpVersion, int statusCode, string reasonPhrase, Stream content,
+        public HttpApplicationResponseContent(string httpVersion, int statusCode, string reasonPhrase, Stream content,
             IHeaderDictionary headers)
         {
             _httpVersion = httpVersion;
@@ -29,7 +29,7 @@ namespace HttpBatchHandler
             _reasonPhrase = reasonPhrase;
             _content = content;
             _headers = headers;
-            Headers.ContentType = SContentType;
+            Headers.ContentType = ResponseContentType;
         }
 
         private byte[] SerializeHeaders()
@@ -62,6 +62,9 @@ namespace HttpBatchHandler
             }
         }
 
+        /// <summary>
+        ///     TODO: impact of return 0 vs. calculating the length?
+        /// </summary>
         protected override bool TryComputeLength(out long length)
         {
             length = 0;
