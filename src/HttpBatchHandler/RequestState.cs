@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -6,7 +7,7 @@ using Microsoft.AspNetCore.Http.Features;
 
 namespace HttpBatchHandler
 {
-    internal class RequestState
+    internal class RequestState : IDisposable
     {
         private readonly IHttpContextFactory _factory;
         private readonly CancellationTokenSource _requestAbortedSource;
@@ -50,11 +51,11 @@ namespace HttpBatchHandler
             }
         }
 
-        internal async Task<HttpApplicationResponseContent> ResponseTaskAsync()
+        internal async Task<HttpApplicationMultipart> ResponseTaskAsync()
         {
             await _responseFeature.FireOnSendingHeadersAsync();
 
-            var response = new HttpApplicationResponseContent
+            var response = new HttpApplicationMultipart
             (
                 _requestFeature.Protocol,
                 Context.Response.StatusCode,
@@ -71,10 +72,24 @@ namespace HttpBatchHandler
             _pipelineFinished = true;
             _responseStream.Abort(exception);
         }
-
-        internal void ServerCleanup()
+        
+        ~RequestState()
         {
-            _factory.Dispose(Context);
+            Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _factory.Dispose(Context);
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

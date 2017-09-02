@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Net.Http.Headers;
 
 namespace HttpBatchHandler
 {
@@ -45,60 +48,45 @@ namespace HttpBatchHandler
                 return;
             }
 
-            var boundary = httpContext.Request.ContentTypeBoundary();
+            var boundary = httpContext.Request.GetMultipartBoundary();
             if (boundary == null)
             {
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await httpContext.Response.WriteAsync("Invalid Content-Type.");
                 return;
             }
-            var reader = new MultipartReader(boundary.Value, httpContext.Request.Body);
+            var cancellationToken = httpContext.RequestAborted;
+            var reader = new MultipartReader(boundary, httpContext.Request.Body);
             // MultiPartContent should probably be replaced with something which can directly write into the response.Body
-            using (var result = new MultipartContent("batch", "batch_" + Guid.NewGuid()))
+            var writer = new MultipartWriter("batch", "batch_" + Guid.NewGuid(), httpContext.Response.Body);
+            HttpApplicationRequestSection section;
+            httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
+            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host, cancellationToken)) != null)
             {
-                HttpApplicationRequestSection section;
-                while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host)) !=
-                       null)
+                if (httpContext.RequestAborted.IsCancellationRequested)
                 {
-                    if (httpContext.RequestAborted.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    var state = new RequestState(section.RequestFeature, _factory, httpContext.RequestServices);
+                    break;
+                }
+                using (var state = new RequestState(section.RequestFeature, _factory, httpContext.RequestServices))
+                {
                     using (httpContext.RequestAborted.Register(state.AbortRequest))
                     {
                         try
                         {
                             await _next.Invoke(state.Context);
-                            result.Add(await state.ResponseTaskAsync());
+                            using (var content = await state.ResponseTaskAsync())
+                            {
+                                await writer.WritePartAsync(content, cancellationToken);
+                            }
                         }
                         catch (Exception ex)
                         {
                             state.Abort(ex);
                         }
-                        finally
-                        {
-                            state.ServerCleanup();
-                        }
                     }
-                }
-                if (!httpContext.RequestAborted.IsCancellationRequested)
-                {
-                    foreach (var httpContentHeader in result.Headers)
-                    {
-                        foreach (var value in httpContentHeader.Value)
-                        {
-                            httpContext.Response.Headers.Add(httpContentHeader.Key, value);
-                        }
-                    }
-                    httpContext.Response.StatusCode = StatusCodes.Status200OK;
-                    await result.CopyToAsync(httpContext.Response.Body);
-                }
-                foreach (var response in result)
-                {
-                    response.Dispose();
                 }
             }
+            //httpContext.Response.StatusCode = StatusCodes.Status200OK;
         }
     }
 }
