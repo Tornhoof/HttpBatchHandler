@@ -116,6 +116,28 @@ namespace HttpBatchHandler.Tests
         }
 
         [Fact]
+        public async Task Performance()
+        {
+            for (var i = 0; i < 10; i++)
+            {
+                var sw = new Stopwatch();
+                sw.Start();
+                var count = 10000;
+                var messages = new List<HttpRequestMessage>(count);
+                for (var j = 0; j < count; j++)
+                {
+                    var message = new HttpRequestMessage(HttpMethod.Get, new Uri(_fixture.BaseUri, "api/values"));
+                    messages.Add(message);
+                }
+                var result = await SendBatchRequestAsync(messages).ConfigureAwait(false);
+                Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+                Assert.Equal(10000, result.ResponsePayload.Length);
+                sw.Stop();
+                _outputHelper.WriteLine("Time:  {0}", sw.Elapsed.TotalMilliseconds);
+            }
+        }
+
+        [Fact]
         public async Task Test()
         {
             var messages = new[]
@@ -139,28 +161,6 @@ namespace HttpBatchHandler.Tests
             foreach (var batchResult in result.ResponsePayload)
             {
                 Assert.True(batchResult.IsSuccessStatusCode);
-            }
-        }
-
-        [Fact]
-        public async Task Performance()
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                Stopwatch sw = new Stopwatch();
-                sw.Start();
-                int count = 10000;
-                var messages = new List<HttpRequestMessage>(count);
-                for (int j = 0; j < count; j++)
-                {
-                    var message = new HttpRequestMessage(HttpMethod.Get, new Uri(_fixture.BaseUri, "api/values"));
-                    messages.Add(message);
-                }
-                var result = await SendBatchRequestAsync(messages).ConfigureAwait(false);
-                Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-                Assert.Equal(10000, result.ResponsePayload.Length);
-                sw.Stop();
-                _outputHelper.WriteLine("Time:  {0}", sw.Elapsed.TotalMilliseconds);
             }
         }
     }

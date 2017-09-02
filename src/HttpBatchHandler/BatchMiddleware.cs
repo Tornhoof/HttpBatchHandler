@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -57,36 +54,36 @@ namespace HttpBatchHandler
             }
             var cancellationToken = httpContext.RequestAborted;
             var reader = new MultipartReader(boundary, httpContext.Request.Body);
-            // MultiPartContent should probably be replaced with something which can directly write into the response.Body
-            var writer = new MultipartWriter("batch", "batch_" + Guid.NewGuid(), httpContext.Response.Body);
-            HttpApplicationRequestSection section;
-            httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
-            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host, cancellationToken)) != null)
+            using (var writer = new MultipartWriter("batch", "batch_" + Guid.NewGuid()))
             {
-                if (httpContext.RequestAborted.IsCancellationRequested)
+                HttpApplicationRequestSection section;
+                while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host,
+                           cancellationToken)) != null)
                 {
-                    break;
-                }
-                using (var state = new RequestState(section.RequestFeature, _factory, httpContext.RequestServices))
-                {
-                    using (httpContext.RequestAborted.Register(state.AbortRequest))
+                    if (httpContext.RequestAborted.IsCancellationRequested)
                     {
-                        try
+                        break;
+                    }
+                    using (var state = new RequestState(section.RequestFeature, _factory, httpContext.RequestServices))
+                    {
+                        using (httpContext.RequestAborted.Register(state.AbortRequest))
                         {
-                            await _next.Invoke(state.Context);
-                            using (var content = await state.ResponseTaskAsync())
+                            try
                             {
-                                await writer.WritePartAsync(content, cancellationToken);
+                                await _next.Invoke(state.Context);
+                                writer.Add(await state.ResponseTaskAsync());
                             }
-                        }
-                        catch (Exception ex)
-                        {
-                            state.Abort(ex);
+                            catch (Exception ex)
+                            {
+                                state.Abort(ex);
+                            }
                         }
                     }
                 }
+                httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
+                httpContext.Response.StatusCode = StatusCodes.Status200OK;
+                await writer.CopyToAsync(httpContext.Response.Body, cancellationToken);
             }
-            //httpContext.Response.StatusCode = StatusCodes.Status200OK;
         }
     }
 }

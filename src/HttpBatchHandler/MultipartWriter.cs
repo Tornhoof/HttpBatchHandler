@@ -1,30 +1,67 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HttpBatchHandler
 {
-    public class MultipartWriter
+    public class MultipartWriter : IDisposable
     {
-        private readonly byte[] _boundary;
-        private readonly Stream _outputStream;
+        private readonly byte[] _endBoundary;
+        private readonly Queue<IMultipart> _parts = new Queue<IMultipart>();
+        private readonly byte[] _startBoundary;
 
-        public string ContentType { get; }
-
-        public MultipartWriter(string subType, string boundary, Stream outputStream)
+        public MultipartWriter(string subType, string boundary)
         {
-            _boundary = Encoding.ASCII.GetBytes($"--{boundary}\r\n");
-            _outputStream = outputStream;
+            _startBoundary = Encoding.ASCII.GetBytes($"\r\n--{boundary}\r\n");
+            _endBoundary = Encoding.ASCII.GetBytes($"\r\n--{boundary}--\r\n");
 
             ContentType = $"multipart/{subType}; boundary=\"{boundary}\"";
         }
 
-        public async Task WritePartAsync(IMultipart multipart,
-            CancellationToken cancellationToken = default(CancellationToken))
+        public string ContentType { get; }
+
+        public void Dispose()
         {
-            await _outputStream.WriteAsync(_boundary, 0, _boundary.Length, cancellationToken);
-            await multipart.CopyToAsync(_outputStream, cancellationToken);
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        public void Add(IMultipart multipart)
+        {
+            _parts.Enqueue(multipart);
+        }
+
+        public async Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            while (_parts.Count > 0)
+            {
+                using (var part = _parts.Dequeue())
+                {
+                    await stream.WriteAsync(_startBoundary, 0, _startBoundary.Length, cancellationToken);
+                    await part.CopyToAsync(stream, cancellationToken);
+                }
+            }
+            await stream.WriteAsync(_endBoundary, 0, _endBoundary.Length, cancellationToken);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                while (_parts.Count > 0)
+                {
+                    var part = _parts.Dequeue();
+                    part.Dispose();
+                }
+            }
+        }
+
+        ~MultipartWriter()
+        {
+            Dispose(false);
         }
     }
 }

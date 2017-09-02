@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -8,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace HttpBatchHandler
 {
-    public class HttpApplicationMultipart : IMultipart, IDisposable
+    public class HttpApplicationMultipart : IMultipart
     {
         private static readonly char[] Crlf = "\r\n".ToCharArray();
         private readonly Stream _content;
@@ -57,6 +56,12 @@ namespace HttpBatchHandler
             }
         }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         ~HttpApplicationMultipart()
         {
             Dispose(false);
@@ -68,12 +73,6 @@ namespace HttpBatchHandler
             {
                 _content.Dispose();
             }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
     }
 }

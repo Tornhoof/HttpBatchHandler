@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Reflection.Metadata;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -43,6 +42,12 @@ namespace HttpBatchHandler
 
         public HttpContext Context { get; }
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         internal void AbortRequest()
         {
             if (!_pipelineFinished)
@@ -72,7 +77,7 @@ namespace HttpBatchHandler
             _pipelineFinished = true;
             _responseStream.Abort(exception);
         }
-        
+
         ~RequestState()
         {
             Dispose(false);
@@ -84,12 +89,6 @@ namespace HttpBatchHandler
             {
                 _factory.Dispose(Context);
             }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
     }
 }

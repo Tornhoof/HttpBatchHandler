@@ -11,34 +11,14 @@ namespace HttpBatchHandler
     {
         private readonly Action _abortRequest;
         private readonly Queue<ArraySegment<byte>> _data = new Queue<ArraySegment<byte>>();
-        private bool _complete;
         private bool _aborted;
         private Exception _abortException;
+        private bool _complete;
 
         public WriteOnlyResponseStream(Action abortRequest)
         {
             _abortRequest = abortRequest;
         }
-
-        public override void Flush()
-        {
-            // nothing to do here
-        }
-
-        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-
-        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback,
-            object state) => throw new NotSupportedException();
-
-        public override int EndRead(IAsyncResult asyncResult) => throw new NotSupportedException();
-
-        public override Task<int>
-            ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
-            throw new NotSupportedException();
-
-        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-
-        public override void SetLength(long value) => throw new NotSupportedException();
 
         public override bool CanRead { get; } = false;
         public override bool CanSeek { get; } = false;
@@ -51,6 +31,44 @@ namespace HttpBatchHandler
         {
             get => throw new NotSupportedException();
             set => throw new NotSupportedException();
+        }
+
+        public override void Flush()
+        {
+            CheckComplete();
+            CheckAborted();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback,
+            object state)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override int EndRead(IAsyncResult asyncResult)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override Task<int>
+            ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
         }
 
         public override void Write(byte[] buffer, int offset, int count)
@@ -95,7 +113,7 @@ namespace HttpBatchHandler
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             CheckAborted();
-            CheckCompleted();
+            CheckComplete();
             var data = ArrayPool<byte>.Shared.Rent(count);
             Buffer.BlockCopy(buffer, offset, data, 0, count);
             var segment = new ArraySegment<byte>(data, 0, count);
@@ -137,9 +155,9 @@ namespace HttpBatchHandler
             _complete = true;
         }
 
-        private void CheckCompleted()
+        private void CheckComplete()
         {
-            if (_aborted)
+            if (_complete)
             {
                 throw new IOException("Completed");
             }
