@@ -12,8 +12,7 @@ namespace HttpBatchHandler
         private readonly CancellationTokenSource _requestAbortedSource;
         private readonly IHttpRequestFeature _requestFeature;
         private readonly ResponseFeature _responseFeature;
-        private readonly ResponseStream _responseStream;
-        private readonly TaskCompletionSource<HttpApplicationResponseContent> _responseTcs;
+        private readonly WriteOnlyResponseStream _responseStream;
         private bool _pipelineFinished;
 
         internal RequestState(IHttpRequestFeature requestFeature, IHttpContextFactory factory,
@@ -21,7 +20,6 @@ namespace HttpBatchHandler
         {
             _requestFeature = requestFeature;
             _factory = factory;
-            _responseTcs = new TaskCompletionSource<HttpApplicationResponseContent>();
             _requestAbortedSource = new CancellationTokenSource();
             _pipelineFinished = false;
 
@@ -34,7 +32,7 @@ namespace HttpBatchHandler
             var serviceProvidersFeature = new ServiceProvidersFeature {RequestServices = provider};
             contextFeatures.Set<IServiceProvidersFeature>(serviceProvidersFeature);
 
-            _responseStream = new ResponseStream(ReturnResponseMessageAsync, AbortRequest);
+            _responseStream = new WriteOnlyResponseStream(AbortRequest);
             _responseFeature.Body = _responseStream;
             _responseFeature.StatusCode = 200;
             requestLifetimeFeature.RequestAborted = _requestAbortedSource.Token;
@@ -44,39 +42,15 @@ namespace HttpBatchHandler
 
         public HttpContext Context { get; }
 
-        public Task<HttpApplicationResponseContent> ResponseTask => _responseTcs.Task;
-
         internal void AbortRequest()
         {
             if (!_pipelineFinished)
             {
                 _requestAbortedSource.Cancel();
             }
-            _responseStream.Complete();
         }
 
-        internal async Task CompleteResponseAsync()
-        {
-            _pipelineFinished = true;
-            await ReturnResponseMessageAsync();
-            _responseStream.Complete();
-            await _responseFeature.FireOnResponseCompletedAsync();
-        }
-
-        internal async Task ReturnResponseMessageAsync()
-        {
-            // Check if the response has already started because the TrySetResult below could happen a bit late
-            // (as it happens on a different thread) by which point the CompleteResponseAsync could run and calls this
-            // method again.
-            if (!Context.Response.HasStarted)
-            {
-                var response = await GenerateResponseAsync();
-                // Dispatch, as TrySetResult will synchronously execute the waiters callback and block our Write.
-                var setResult = Task.Factory.StartNew(() => _responseTcs.TrySetResult(response));
-            }
-        }
-
-        private async Task<HttpApplicationResponseContent> GenerateResponseAsync()
+        internal async Task<HttpApplicationResponseContent> ResponseTaskAsync()
         {
             await _responseFeature.FireOnSendingHeadersAsync();
 
@@ -88,6 +62,7 @@ namespace HttpBatchHandler
                 _responseStream,
                 Context.Features.Get<IHttpResponseFeature>().Headers
             );
+            await _responseFeature.FireOnResponseCompletedAsync();
             return response;
         }
 
@@ -95,7 +70,6 @@ namespace HttpBatchHandler
         {
             _pipelineFinished = true;
             _responseStream.Abort(exception);
-            _responseTcs.TrySetException(exception);
         }
 
         internal void ServerCleanup()

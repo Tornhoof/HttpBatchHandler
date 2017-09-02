@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
@@ -59,16 +60,17 @@ namespace HttpBatchHandler
                 while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host)) !=
                        null)
                 {
+                    if (httpContext.RequestAborted.IsCancellationRequested)
+                    {
+                        break;
+                    }
                     var state = new RequestState(section.RequestFeature, _factory, httpContext.RequestServices);
-                    var registration = httpContext.RequestAborted.Register(state.AbortRequest);
-
-                    // Async offload, don't let the test code block the caller.
-                    var offload = Task.Factory.StartNew(async () =>
+                    using (httpContext.RequestAborted.Register(state.AbortRequest))
                     {
                         try
                         {
                             await _next.Invoke(state.Context);
-                            await state.CompleteResponseAsync();
+                            result.Add(await state.ResponseTaskAsync());
                         }
                         catch (Exception ex)
                         {
@@ -77,21 +79,21 @@ namespace HttpBatchHandler
                         finally
                         {
                             state.ServerCleanup();
-                            registration.Dispose();
                         }
-                    });
-                    var response = await state.ResponseTask;
-                    result.Add(response);
-                }
-                foreach (var httpContentHeader in result.Headers)
-                {
-                    foreach (var value in httpContentHeader.Value)
-                    {
-                        httpContext.Response.Headers.Add(httpContentHeader.Key, value);
                     }
                 }
-                httpContext.Response.StatusCode = StatusCodes.Status200OK;
-                await result.CopyToAsync(httpContext.Response.Body);
+                if (!httpContext.RequestAborted.IsCancellationRequested)
+                {
+                    foreach (var httpContentHeader in result.Headers)
+                    {
+                        foreach (var value in httpContentHeader.Value)
+                        {
+                            httpContext.Response.Headers.Add(httpContentHeader.Key, value);
+                        }
+                    }
+                    httpContext.Response.StatusCode = StatusCodes.Status200OK;
+                    await result.CopyToAsync(httpContext.Response.Body);
+                }
                 foreach (var response in result)
                 {
                     response.Dispose();
