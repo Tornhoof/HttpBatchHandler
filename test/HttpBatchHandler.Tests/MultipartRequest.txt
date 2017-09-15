@@ -1,0 +1,37 @@
+﻿POST http://localhost:12345/api/batch HTTP/1.1
+Content-Type: multipart/mixed; boundary="batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e"
+Host: localhost:12345
+Content-Length: 857
+Expect: 100-continue
+
+--batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e
+Content-Type: application/http; msgtype=request
+
+GET /api/WebCustomers?Query=Parts HTTP/1.1
+Host: localhost:13245
+
+
+--batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e
+Content-Type: application/http; msgtype=request
+
+POST /api/WebCustomers HTTP/1.1
+Host: localhost:13245
+Content-Type: application/json; charset=utf-8
+
+{"Id":129,"Name":"Name4752cbf0-e365-43c3-aa8d-1bbc8429dbf8"}
+--batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e
+Content-Type: application/http; msgtype=request
+
+PUT /api/WebCustomers/1 HTTP/1.1
+Host: localhost:13245
+Content-Type: application/json; charset=utf-8
+
+{"Id":1,"Name":"Peter"}
+--batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e
+Content-Type: application/http; msgtype=request
+
+DELETE /api/WebCustomers/2 HTTP/1.1
+Host: localhost:13245
+
+
+--batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e--

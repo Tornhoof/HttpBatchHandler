@@ -16,12 +16,8 @@ namespace HttpBatchHandler
     {
         private const int DefaultBufferSize = 1024 * 4;
 
-        /// <summary>
-        ///     TODO: Better ways to parse the content-type?
-        /// </summary>
         public static async Task<HttpApplicationRequestSection> ReadNextHttpApplicationRequestSectionAsync(
-            this MultipartReader reader, HostString hostString,
-            CancellationToken cancellationToken = default(CancellationToken))
+            this MultipartReader reader, CancellationToken cancellationToken = default(CancellationToken))
         {
             var section = await reader.ReadNextSectionAsync(cancellationToken);
             if (section == null)
@@ -51,7 +47,11 @@ namespace HttpBatchHandler
             }
             // Validation of the request line parts necessary?
             var headers = await ReadHeadersAsync(bufferedStream, cancellationToken);
-            var uri = BuildUri(hostString, requestLineParts[1]);
+            if (!headers.TryGetValue(HeaderNames.Host, out var hostHeader))
+            {
+                throw new InvalidDataException("No Host Header");
+            }
+            var uri = BuildUri(hostHeader, requestLineParts[1]);
             return new HttpApplicationRequestSection
             {
                 RequestFeature = new HttpRequestFeature
@@ -68,31 +68,20 @@ namespace HttpBatchHandler
             };
         }
 
-        /// <summary>
-        ///     TODO: Is manual query splitting the right way?
-        /// </summary>
-        private static Uri BuildUri(HostString hostString, string pathAndQuery)
+        private static Uri BuildUri(StringValues hostHeader, string pathAndQuery)
         {
+            if (hostHeader.Count != 1)
+            {
+                throw new InvalidOperationException("Invalid Host Header");
+            }
+            var hostString = new HostString(hostHeader.Single());
             if (!hostString.HasValue)
             {
                 return null;
             }
-            var ub = new UriBuilder("http", hostString.Host);
-            if (hostString.Port.HasValue)
-            {
-                ub.Port = hostString.Port.Value;
-            }
-            var querydelimiter = pathAndQuery.IndexOf('?');
-            if (querydelimiter != -1)
-            {
-                ub.Path = pathAndQuery.Substring(0, querydelimiter);
-                ub.Query = pathAndQuery.Substring(querydelimiter + 1);
-            }
-            else
-            {
-                ub.Path = pathAndQuery;
-            }
-            return ub.Uri;
+            var fullUri = $"http://{hostString.ToUriComponent()}{pathAndQuery}";
+            var uri = new Uri(fullUri);
+            return uri;
         }
 
 

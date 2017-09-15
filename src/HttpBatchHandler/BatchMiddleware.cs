@@ -63,8 +63,7 @@ namespace HttpBatchHandler
                 try
                 {
                     HttpApplicationRequestSection section;
-                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host,
-                               cancellationToken)) != null)
+                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(cancellationToken)) != null)
                     {
                         if (httpContext.RequestAborted.IsCancellationRequested)
                         {
