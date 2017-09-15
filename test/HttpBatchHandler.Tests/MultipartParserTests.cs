@@ -1,10 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Net.Http.Headers;
+using Newtonsoft.Json;
 using Xunit;
 
 namespace HttpBatchHandler.Tests
@@ -23,6 +27,7 @@ namespace HttpBatchHandler.Tests
             {
                 sections.Add(section);
             }
+            Assert.Equal(4, sections.Count);
             Assert.Collection(sections, InspectFirstRequest, InspectSecondRequest, InspectThirdRequest, InspectFourthRequest);
         }
 
@@ -33,6 +38,7 @@ namespace HttpBatchHandler.Tests
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
             Assert.Equal("?Query=Parts", obj.RequestFeature.QueryString);
+            Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
         }
 
         private void InspectSecondRequest(HttpApplicationRequestSection obj)
@@ -41,6 +47,11 @@ namespace HttpBatchHandler.Tests
             Assert.Equal("/api/WebCustomers", obj.RequestFeature.Path);
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
+            Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
+            var serializer = JsonSerializer.Create();
+            dynamic deserialized = serializer.Deserialize(new JsonTextReader(new StreamReader(obj.RequestFeature.Body)));
+            Assert.Equal("129", deserialized.Id.ToString());
+            Assert.Equal("Name4752cbf0-e365-43c3-aa8d-1bbc8429dbf8", deserialized.Name.ToString());
         }
 
 
@@ -50,6 +61,11 @@ namespace HttpBatchHandler.Tests
             Assert.Equal("/api/WebCustomers/1", obj.RequestFeature.Path);
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
+            Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
+            var serializer = JsonSerializer.Create();
+            dynamic deserialized = serializer.Deserialize(new JsonTextReader(new StreamReader(obj.RequestFeature.Body)));
+            Assert.Equal("1", deserialized.Id.ToString());
+            Assert.Equal("Peter", deserialized.Name.ToString());
         }
 
         private void InspectFourthRequest(HttpApplicationRequestSection obj)
@@ -58,6 +74,7 @@ namespace HttpBatchHandler.Tests
             Assert.Equal("/api/WebCustomers/2", obj.RequestFeature.Path);
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
+            Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
         }
     }
 }
