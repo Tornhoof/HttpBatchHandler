@@ -16,21 +16,20 @@ namespace HttpBatchHandler
         private bool _pipelineFinished;
 
         internal RequestState(IHttpRequestFeature requestFeature, IHttpContextFactory factory,
-            IServiceProvider provider)
+            FeatureCollection featureCollection)
         {
             _requestFeature = requestFeature;
             _factory = factory;
             _requestAbortedSource = new CancellationTokenSource();
             _pipelineFinished = false;
 
-            var contextFeatures = new FeatureCollection();
+            var contextFeatures = new FeatureCollection(featureCollection);
+            contextFeatures.Set(requestFeature);
             contextFeatures.Set(requestFeature);
             _responseFeature = new ResponseFeature();
             contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
             var requestLifetimeFeature = new HttpRequestLifetimeFeature();
             contextFeatures.Set<IHttpRequestLifetimeFeature>(requestLifetimeFeature);
-            var serviceProvidersFeature = new ServiceProvidersFeature {RequestServices = provider};
-            contextFeatures.Set<IServiceProvidersFeature>(serviceProvidersFeature);
 
             _responseStream = new WriteOnlyResponseStream(AbortRequest);
             _responseFeature.Body = _responseStream;

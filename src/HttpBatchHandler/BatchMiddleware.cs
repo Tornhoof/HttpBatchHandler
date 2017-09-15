@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http.Features.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 
@@ -10,22 +13,20 @@ namespace HttpBatchHandler
     public class BatchMiddleware
     {
         private readonly IHttpContextFactory _factory;
-        private readonly PathString _match;
+        private readonly BatchMiddlewareOptions _options;
         private readonly RequestDelegate _next;
 
-        public BatchMiddleware(RequestDelegate next, IHttpContextFactory factory, PathString match)
+        public BatchMiddleware(RequestDelegate next, IHttpContextFactory factory, BatchMiddlewareOptions options)
         {
             _next = next;
             _factory = factory;
-            _match = match;
+            _options = options;
         }
 
-        /// <summary>
-        ///     TODO: Right way to call this middleware each and every time?
-        /// </summary>
+
         public Task Invoke(HttpContext httpContext)
         {
-            if (!httpContext.Request.Path.Equals(_match))
+            if (!httpContext.Request.Path.Equals(_options.Match))
             {
                 return _next.Invoke(httpContext);
             }
@@ -33,7 +34,6 @@ namespace HttpBatchHandler
         }
 
         /// <summary>
-        ///     TODO: Customization (OnXYZCompleted/Started etc.)
         ///     Is the Async Offload stuff and the rather complicated state and stream handling really necessary?
         /// </summary>
         private async Task InvokeBatchAsync(HttpContext httpContext)
@@ -52,38 +52,96 @@ namespace HttpBatchHandler
                 await httpContext.Response.WriteAsync("Invalid Content-Type.");
                 return;
             }
+            var startContext = new BatchStartContext();
+            await _options.Events.OnBatchStart(startContext);
+            Exception exception = null;
             var cancellationToken = httpContext.RequestAborted;
+
             var reader = new MultipartReader(boundary, httpContext.Request.Body);
             using (var writer = new MultipartWriter("batch", "batch_" + Guid.NewGuid()))
             {
-                HttpApplicationRequestSection section;
-                while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host,
-                           cancellationToken)) != null)
+                try
                 {
-                    if (httpContext.RequestAborted.IsCancellationRequested)
+                    HttpApplicationRequestSection section;
+                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host,
+                               cancellationToken)) != null)
                     {
-                        break;
-                    }
-                    using (var state = new RequestState(section.RequestFeature, _factory, httpContext.RequestServices))
-                    {
-                        using (httpContext.RequestAborted.Register(state.AbortRequest))
+                        if (httpContext.RequestAborted.IsCancellationRequested)
                         {
-                            try
+                            break;
+                        }
+                        var executingContext = new BatchRequestExecutingContext
+                        {
+                            Request = section,
+                            Features = CreateDefaultFeatures(httpContext.Features),
+                            State = startContext.State,
+                        };
+                        await _options.Events.OnBatchRequestExecuting(executingContext);
+                        using (var state =
+                            new RequestState(section.RequestFeature, _factory, executingContext.Features))
+                        {
+                            using (httpContext.RequestAborted.Register(state.AbortRequest))
                             {
-                                await _next.Invoke(state.Context);
-                                writer.Add(await state.ResponseTaskAsync());
-                            }
-                            catch (Exception ex)
-                            {
-                                state.Abort(ex);
+                                BatchRequestExecutedContext executedContext =
+                                    new BatchRequestExecutedContext {Request = section, State = startContext.State,};
+                                bool abort;
+                                try
+                                {
+                                    await _next.Invoke(state.Context);
+                                    var response = await state.ResponseTaskAsync();
+                                    executedContext.Response = response;
+                                    writer.Add(response);
+                                }
+                                catch (Exception ex)
+                                {
+                                    state.Abort(ex);
+                                    executedContext.Exception = ex;
+                                }
+                                finally
+                                {
+                                    await _options.Events.OnBatchRequestExecuted(executedContext);
+                                    abort = executedContext.Abort;
+                                }
+                                if (abort)
+                                {
+                                    break;
+                                }
                             }
                         }
                     }
+
                 }
-                httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
-                httpContext.Response.StatusCode = StatusCodes.Status200OK;
-                await writer.CopyToAsync(httpContext.Response.Body, cancellationToken);
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                finally
+                {
+                    var endContext = new BatchEndContext
+                    {
+                        Writer = writer,
+                        Exception = exception,
+                        State = startContext.State,
+                    };
+                    await _options.Events.OnBatchEnd(endContext);
+                    httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
+                    httpContext.Response.StatusCode = endContext.StatusCode;
+                    if (endContext.WriteBody)
+                    {
+                        await writer.CopyToAsync(httpContext.Response.Body, cancellationToken);
+                    }
+                }
             }
+        }
+
+        private FeatureCollection CreateDefaultFeatures(IFeatureCollection input)
+        {
+            var output = new FeatureCollection();
+            output.Set(input.Get<IServiceProvidersFeature>());
+            output.Set(input.Get<IHttpRequestIdentifierFeature>());
+            output.Set(input.Get<IAuthenticationFeature>());
+            output.Set(input.Get<IHttpAuthenticationFeature>());
+            return output;
         }
     }
 }
