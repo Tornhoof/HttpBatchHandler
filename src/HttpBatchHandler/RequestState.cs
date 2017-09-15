@@ -55,6 +55,9 @@ namespace HttpBatchHandler
             }
         }
 
+        /// <summary>
+        /// FireOnSendingHeadersAsync is a bit late here, the remaining middlewares are already fully processed, the stream is complete
+        /// </summary>
         internal async Task<HttpApplicationMultipart> ResponseTaskAsync()
         {
             await _responseFeature.FireOnSendingHeadersAsync();

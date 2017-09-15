@@ -122,7 +122,7 @@ namespace HttpBatchHandler.Tests
             {
                 var sw = new Stopwatch();
                 sw.Start();
-                var count = 10000;
+                var count = 1000;
                 var messages = new List<HttpRequestMessage>(count);
                 for (var j = 0; j < count; j++)
                 {
@@ -131,7 +131,7 @@ namespace HttpBatchHandler.Tests
                 }
                 var result = await SendBatchRequestAsync(messages).ConfigureAwait(false);
                 Assert.Equal(HttpStatusCode.OK, result.StatusCode);
-                Assert.Equal(10000, result.ResponsePayload.Length);
+                Assert.Equal(1000, result.ResponsePayload.Length);
                 sw.Stop();
                 _outputHelper.WriteLine("Time:  {0}", sw.Elapsed.TotalMilliseconds);
             }
