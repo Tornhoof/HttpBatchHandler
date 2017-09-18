@@ -16,7 +16,7 @@ namespace HttpBatchHandler
         private bool _pipelineFinished;
 
         internal RequestState(IHttpRequestFeature requestFeature, IHttpContextFactory factory,
-            FeatureCollection featureCollection)
+            IFeatureCollection featureCollection)
         {
             _requestFeature = requestFeature;
             _factory = factory;
@@ -25,7 +25,7 @@ namespace HttpBatchHandler
 
             var contextFeatures = new FeatureCollection(featureCollection);
             contextFeatures.Set(requestFeature);
-            _responseFeature = new ResponseFeature();
+            _responseFeature = new ResponseFeature(requestFeature.Protocol);
             contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
             var requestLifetimeFeature = new HttpRequestLifetimeFeature();
             contextFeatures.Set<IHttpRequestLifetimeFeature>(requestLifetimeFeature);
@@ -57,20 +57,11 @@ namespace HttpBatchHandler
         /// <summary>
         /// FireOnSendingHeadersAsync is a bit late here, the remaining middlewares are already fully processed, the stream is complete
         /// </summary>
-        internal async Task<HttpApplicationMultipart> ResponseTaskAsync()
+        internal async Task<ResponseFeature> ResponseTaskAsync()
         {
             await _responseFeature.FireOnSendingHeadersAsync();
-
-            var response = new HttpApplicationMultipart
-            (
-                _requestFeature.Protocol,
-                Context.Response.StatusCode,
-                Context.Features.Get<IHttpResponseFeature>().ReasonPhrase,
-                _responseStream,
-                Context.Features.Get<IHttpResponseFeature>().Headers
-            );
             await _responseFeature.FireOnResponseCompletedAsync();
-            return response;
+            return _responseFeature;
         }
 
         internal void Abort(Exception exception)

@@ -42,7 +42,7 @@ namespace HttpBatchHandler
             if (!httpContext.Request.IsMultiPartBatchRequest())
             {
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-                await httpContext.Response.WriteAsync("Invalid Content-Type.");
+                await httpContext.Response.WriteAsync("Invalid Content-Type.").ConfigureAwait(false);
                 return;
             }
 
@@ -50,7 +50,7 @@ namespace HttpBatchHandler
             if (boundary == null)
             {
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
-                await httpContext.Response.WriteAsync("Invalid Content-Type.");
+                await httpContext.Response.WriteAsync("Invalid Content-Type.").ConfigureAwait(false);
                 return;
             }
             var startContext = new BatchStartContext();
@@ -72,7 +72,7 @@ namespace HttpBatchHandler
                         }
                         var executingContext = new BatchRequestExecutingContext
                         {
-                            Request = section,
+                            Request = section.RequestFeature,
                             Features = CreateDefaultFeatures(httpContext.Features),
                             State = startContext.State,
                         };
@@ -83,14 +83,14 @@ namespace HttpBatchHandler
                             using (httpContext.RequestAborted.Register(state.AbortRequest))
                             {
                                 BatchRequestExecutedContext executedContext =
-                                    new BatchRequestExecutedContext {Request = section, State = startContext.State,};
+                                    new BatchRequestExecutedContext {Request = section.RequestFeature, State = startContext.State,};
                                 bool abort;
                                 try
                                 {
                                     await _next.Invoke(state.Context);
                                     var response = await state.ResponseTaskAsync();
                                     executedContext.Response = response;
-                                    writer.Add(response);
+                                    writer.Add(new HttpApplicationMultipart(response));
                                 }
                                 catch (Exception ex)
                                 {

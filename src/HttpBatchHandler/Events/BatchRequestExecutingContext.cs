@@ -4,8 +4,8 @@ namespace HttpBatchHandler.Events
 {
     public class BatchRequestExecutingContext
     {
-        public HttpApplicationRequestSection Request { get; set; }
-        public FeatureCollection Features { get; set; }
+        public IHttpRequestFeature Request { get; set; }
+        public IFeatureCollection Features { get; set; }
         public object State { get; set; }
     }
 }

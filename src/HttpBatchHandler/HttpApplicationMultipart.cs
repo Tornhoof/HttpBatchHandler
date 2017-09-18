@@ -16,6 +16,11 @@ namespace HttpBatchHandler
         private readonly string _reasonPhrase;
         public int StatusCode { get; }
 
+        internal HttpApplicationMultipart(ResponseFeature responseFeature) : this(responseFeature.Protocol,
+            responseFeature.StatusCode, responseFeature.ReasonPhrase, responseFeature.Body, responseFeature.Headers)
+        {
+        }
+
         public HttpApplicationMultipart(string httpVersion, int statusCode, string reasonPhrase, Stream content,
             IHeaderDictionary headers)
         {
