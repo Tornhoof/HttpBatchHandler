@@ -61,6 +61,7 @@ namespace HttpBatchHandler
         {
             await _responseFeature.FireOnSendingHeadersAsync();
             await _responseFeature.FireOnResponseCompletedAsync();
+            _responseStream.Complete();
             return _responseFeature;
         }
 
