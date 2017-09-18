@@ -119,7 +119,6 @@ namespace HttpBatchHandler
                 {
                     var endContext = new BatchEndContext
                     {
-                        Writer = writer,
                         Exception = exception,
                         State = startContext.State,
                     };

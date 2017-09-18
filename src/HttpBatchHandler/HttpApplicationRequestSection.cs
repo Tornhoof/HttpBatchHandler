@@ -2,7 +2,7 @@
 
 namespace HttpBatchHandler
 {
-    public class HttpApplicationRequestSection
+    internal class HttpApplicationRequestSection
     {
         public HttpRequestFeature RequestFeature { get; set; }
     }

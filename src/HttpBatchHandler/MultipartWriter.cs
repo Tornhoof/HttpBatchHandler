@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HttpBatchHandler
 {
-    public class MultipartWriter : IDisposable
+    internal class MultipartWriter : IDisposable
     {
         private readonly byte[] _endBoundary;
         private readonly Queue<IMultipart> _parts = new Queue<IMultipart>();

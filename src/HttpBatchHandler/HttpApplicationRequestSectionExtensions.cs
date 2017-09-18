@@ -12,7 +12,7 @@ using Microsoft.Net.Http.Headers;
 
 namespace HttpBatchHandler
 {
-    public static class HttpApplicationRequestSectionExtensions
+    internal static class HttpApplicationRequestSectionExtensions
     {
         private const int DefaultBufferSize = 1024 * 4;
 

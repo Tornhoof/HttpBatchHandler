@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace HttpBatchHandler
 {
-    public class HttpApplicationMultipart : IMultipart
+    internal class HttpApplicationMultipart : IMultipart
     {
         private static readonly char[] Crlf = "\r\n".ToCharArray();
         private readonly Stream _content;

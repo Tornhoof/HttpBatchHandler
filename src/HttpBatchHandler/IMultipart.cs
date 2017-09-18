@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace HttpBatchHandler
 {
-    public interface IMultipart : IDisposable
+    internal interface IMultipart : IDisposable
     {
         Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default(CancellationToken));
     }

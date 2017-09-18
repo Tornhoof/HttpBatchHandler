@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace HttpBatchHandler
 {
-    public static class HttpRequestExtensions
+    internal static class HttpRequestExtensions
     {
         public static bool IsMultiPartBatchRequest(this HttpRequest request)
         {
