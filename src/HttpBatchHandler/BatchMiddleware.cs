@@ -134,6 +134,10 @@ namespace HttpBatchHandler
                         IsAborted = abort,
                         Response = httpContext.Response,
                     };
+                    if (endContext.Exception != null)
+                    {
+                        endContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
+                    }
                     await _options.Events.BatchEnd(endContext);
                     if (!endContext.IsHandled)
                     {
