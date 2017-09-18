@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using HttpBatchHandler.Events;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -6,10 +8,18 @@ namespace HttpBatchHandler
 {
     public static class BatchMiddlewareExtensions
     {
-        public static IApplicationBuilder UseBatchMiddleware(this IApplicationBuilder builder, PathString match)
+        public static IApplicationBuilder UseBatchMiddleware(this IApplicationBuilder builder)
+        {
+            return builder.UseBatchMiddleware(null);
+        }
+
+        public static IApplicationBuilder UseBatchMiddleware(this IApplicationBuilder builder,
+            Action<BatchMiddlewareOptions> configurationAction)
         {
             var factory = builder.ApplicationServices.GetRequiredService<IHttpContextFactory>();
-            return builder.UseMiddleware<BatchMiddleware>(factory, match);
+            var options = new BatchMiddlewareOptions();
+            configurationAction?.Invoke(options);
+            return builder.UseMiddleware<BatchMiddleware>(factory, options);
         }
     }
 }

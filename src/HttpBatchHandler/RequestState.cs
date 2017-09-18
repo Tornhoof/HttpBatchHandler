@@ -6,35 +6,31 @@ using Microsoft.AspNetCore.Http.Features;
 
 namespace HttpBatchHandler
 {
-    internal class RequestState
+    internal class RequestState : IDisposable
     {
         private readonly IHttpContextFactory _factory;
         private readonly CancellationTokenSource _requestAbortedSource;
         private readonly IHttpRequestFeature _requestFeature;
         private readonly ResponseFeature _responseFeature;
-        private readonly ResponseStream _responseStream;
-        private readonly TaskCompletionSource<HttpApplicationResponseContent> _responseTcs;
+        private readonly WriteOnlyResponseStream _responseStream;
         private bool _pipelineFinished;
 
         internal RequestState(IHttpRequestFeature requestFeature, IHttpContextFactory factory,
-            IServiceProvider provider)
+            FeatureCollection featureCollection)
         {
             _requestFeature = requestFeature;
             _factory = factory;
-            _responseTcs = new TaskCompletionSource<HttpApplicationResponseContent>();
             _requestAbortedSource = new CancellationTokenSource();
             _pipelineFinished = false;
 
-            var contextFeatures = new FeatureCollection();
+            var contextFeatures = new FeatureCollection(featureCollection);
             contextFeatures.Set(requestFeature);
             _responseFeature = new ResponseFeature();
             contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
             var requestLifetimeFeature = new HttpRequestLifetimeFeature();
             contextFeatures.Set<IHttpRequestLifetimeFeature>(requestLifetimeFeature);
-            var serviceProvidersFeature = new ServiceProvidersFeature {RequestServices = provider};
-            contextFeatures.Set<IServiceProvidersFeature>(serviceProvidersFeature);
 
-            _responseStream = new ResponseStream(ReturnResponseMessageAsync, AbortRequest);
+            _responseStream = new WriteOnlyResponseStream(AbortRequest);
             _responseFeature.Body = _responseStream;
             _responseFeature.StatusCode = 200;
             requestLifetimeFeature.RequestAborted = _requestAbortedSource.Token;
@@ -44,7 +40,11 @@ namespace HttpBatchHandler
 
         public HttpContext Context { get; }
 
-        public Task<HttpApplicationResponseContent> ResponseTask => _responseTcs.Task;
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         internal void AbortRequest()
         {
@@ -52,35 +52,16 @@ namespace HttpBatchHandler
             {
                 _requestAbortedSource.Cancel();
             }
-            _responseStream.Complete();
         }
 
-        internal async Task CompleteResponseAsync()
-        {
-            _pipelineFinished = true;
-            await ReturnResponseMessageAsync();
-            _responseStream.Complete();
-            await _responseFeature.FireOnResponseCompletedAsync();
-        }
-
-        internal async Task ReturnResponseMessageAsync()
-        {
-            // Check if the response has already started because the TrySetResult below could happen a bit late
-            // (as it happens on a different thread) by which point the CompleteResponseAsync could run and calls this
-            // method again.
-            if (!Context.Response.HasStarted)
-            {
-                var response = await GenerateResponseAsync();
-                // Dispatch, as TrySetResult will synchronously execute the waiters callback and block our Write.
-                var setResult = Task.Factory.StartNew(() => _responseTcs.TrySetResult(response));
-            }
-        }
-
-        private async Task<HttpApplicationResponseContent> GenerateResponseAsync()
+        /// <summary>
+        /// FireOnSendingHeadersAsync is a bit late here, the remaining middlewares are already fully processed, the stream is complete
+        /// </summary>
+        internal async Task<HttpApplicationMultipart> ResponseTaskAsync()
         {
             await _responseFeature.FireOnSendingHeadersAsync();
 
-            var response = new HttpApplicationResponseContent
+            var response = new HttpApplicationMultipart
             (
                 _requestFeature.Protocol,
                 Context.Response.StatusCode,
@@ -88,6 +69,7 @@ namespace HttpBatchHandler
                 _responseStream,
                 Context.Features.Get<IHttpResponseFeature>().Headers
             );
+            await _responseFeature.FireOnResponseCompletedAsync();
             return response;
         }
 
@@ -95,12 +77,19 @@ namespace HttpBatchHandler
         {
             _pipelineFinished = true;
             _responseStream.Abort(exception);
-            _responseTcs.TrySetException(exception);
         }
 
-        internal void ServerCleanup()
+        ~RequestState()
         {
-            _factory.Dispose(Context);
+            Dispose(false);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _factory.Dispose(Context);
+            }
         }
     }
 }

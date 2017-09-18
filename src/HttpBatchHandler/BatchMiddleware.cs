@@ -1,30 +1,33 @@
 ﻿using System;
-using System.Net.Http;
 using System.Threading.Tasks;
+using HttpBatchHandler.Events;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Http.Features.Authentication;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Net.Http.Headers;
 
 namespace HttpBatchHandler
 {
     public class BatchMiddleware
     {
         private readonly IHttpContextFactory _factory;
-        private readonly PathString _match;
+        private readonly BatchMiddlewareOptions _options;
         private readonly RequestDelegate _next;
 
-        public BatchMiddleware(RequestDelegate next, IHttpContextFactory factory, PathString match)
+        public BatchMiddleware(RequestDelegate next, IHttpContextFactory factory, BatchMiddlewareOptions options)
         {
             _next = next;
             _factory = factory;
-            _match = match;
+            _options = options;
         }
 
-        /// <summary>
-        ///     TODO: Right way to call this middleware each and every time?
-        /// </summary>
+
         public Task Invoke(HttpContext httpContext)
         {
-            if (!httpContext.Request.Path.Equals(_match))
+            if (!httpContext.Request.Path.Equals(_options.Match))
             {
                 return _next.Invoke(httpContext);
             }
@@ -32,7 +35,6 @@ namespace HttpBatchHandler
         }
 
         /// <summary>
-        ///     TODO: Customization (OnXYZCompleted/Started etc.)
         ///     Is the Async Offload stuff and the rather complicated state and stream handling really necessary?
         /// </summary>
         private async Task InvokeBatchAsync(HttpContext httpContext)
@@ -44,59 +46,103 @@ namespace HttpBatchHandler
                 return;
             }
 
-            var boundary = httpContext.Request.ContentTypeBoundary();
+            var boundary = httpContext.Request.GetMultipartBoundary();
             if (boundary == null)
             {
                 httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
                 await httpContext.Response.WriteAsync("Invalid Content-Type.");
                 return;
             }
-            var reader = new MultipartReader(boundary.Value, httpContext.Request.Body);
-            // MultiPartContent should probably be replaced with something which can directly write into the response.Body
-            using (var result = new MultipartContent("batch", "batch_" + Guid.NewGuid()))
-            {
-                HttpApplicationRequestSection section;
-                while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(httpContext.Request.Host)) !=
-                       null)
-                {
-                    var state = new RequestState(section.RequestFeature, _factory, httpContext.RequestServices);
-                    var registration = httpContext.RequestAborted.Register(state.AbortRequest);
+            var startContext = new BatchStartContext();
+            await _options.Events.BatchStart(startContext);
+            Exception exception = null;
+            var cancellationToken = httpContext.RequestAborted;
 
-                    // Async offload, don't let the test code block the caller.
-                    var offload = Task.Factory.StartNew(async () =>
-                    {
-                        try
-                        {
-                            await _next.Invoke(state.Context);
-                            await state.CompleteResponseAsync();
-                        }
-                        catch (Exception ex)
-                        {
-                            state.Abort(ex);
-                        }
-                        finally
-                        {
-                            state.ServerCleanup();
-                            registration.Dispose();
-                        }
-                    });
-                    var response = await state.ResponseTask;
-                    result.Add(response);
-                }
-                foreach (var httpContentHeader in result.Headers)
+            var reader = new MultipartReader(boundary, httpContext.Request.Body);
+            using (var writer = new MultipartWriter("batch", "batch_" + Guid.NewGuid()))
+            {
+                try
                 {
-                    foreach (var value in httpContentHeader.Value)
+                    HttpApplicationRequestSection section;
+                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(cancellationToken)) != null)
                     {
-                        httpContext.Response.Headers.Add(httpContentHeader.Key, value);
+                        if (httpContext.RequestAborted.IsCancellationRequested)
+                        {
+                            break;
+                        }
+                        var executingContext = new BatchRequestExecutingContext
+                        {
+                            Request = section,
+                            Features = CreateDefaultFeatures(httpContext.Features),
+                            State = startContext.State,
+                        };
+                        await _options.Events.BatchRequestExecuting(executingContext);
+                        using (var state =
+                            new RequestState(section.RequestFeature, _factory, executingContext.Features))
+                        {
+                            using (httpContext.RequestAborted.Register(state.AbortRequest))
+                            {
+                                BatchRequestExecutedContext executedContext =
+                                    new BatchRequestExecutedContext {Request = section, State = startContext.State,};
+                                bool abort;
+                                try
+                                {
+                                    await _next.Invoke(state.Context);
+                                    var response = await state.ResponseTaskAsync();
+                                    executedContext.Response = response;
+                                    writer.Add(response);
+                                }
+                                catch (Exception ex)
+                                {
+                                    state.Abort(ex);
+                                    executedContext.Exception = ex;
+                                }
+                                finally
+                                {
+                                    await _options.Events.BatchRequestExecuted(executedContext);
+                                    abort = executedContext.Abort;
+                                }
+                                if (abort)
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    exception = ex;
+                }
+                finally
+                {
+                    var endContext = new BatchEndContext
+                    {
+                        Writer = writer,
+                        Exception = exception,
+                        State = startContext.State,
+                    };
+                    await _options.Events.BatchEnd(endContext);
+                    httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
+                    httpContext.Response.StatusCode = endContext.StatusCode;
+                    if (endContext.WriteBody)
+                    {
+                        await writer.CopyToAsync(httpContext.Response.Body, cancellationToken);
                     }
                 }
-                httpContext.Response.StatusCode = StatusCodes.Status200OK;
-                await result.CopyToAsync(httpContext.Response.Body);
-                foreach (var response in result)
-                {
-                    response.Dispose();
-                }
             }
+        }
+
+        private FeatureCollection CreateDefaultFeatures(IFeatureCollection input)
+        {
+            var output = new FeatureCollection();
+            output.Set(input.Get<IServiceProvidersFeature>());
+            output.Set(input.Get<IHttpRequestIdentifierFeature>());
+            output.Set(input.Get<IAuthenticationFeature>());
+            output.Set(input.Get<IHttpAuthenticationFeature>());
+            output.Set<IItemsFeature>(new ItemsFeature()); // per request?
+            return output;
         }
     }
 }

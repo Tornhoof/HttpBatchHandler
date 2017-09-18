@@ -27,7 +27,7 @@ namespace HttpBatchHandler.Website
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseBatchMiddleware("/api/batch");
+            app.UseBatchMiddleware();
             app.UseMvc();
         }
     }
