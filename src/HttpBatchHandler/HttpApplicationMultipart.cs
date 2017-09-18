@@ -11,20 +11,19 @@ namespace HttpBatchHandler
     {
         private static readonly char[] Crlf = "\r\n".ToCharArray();
         private readonly Stream _content;
-        private readonly IHeaderDictionary _headers;
+        public IHeaderDictionary Headers { get; }
         private readonly string _httpVersion;
         private readonly string _reasonPhrase;
-        private readonly int _statusCode;
-
+        public int StatusCode { get; }
 
         public HttpApplicationMultipart(string httpVersion, int statusCode, string reasonPhrase, Stream content,
             IHeaderDictionary headers)
         {
             _httpVersion = httpVersion;
-            _statusCode = statusCode;
+            StatusCode = statusCode;
             _reasonPhrase = reasonPhrase;
             _content = content;
-            _headers = headers;
+            Headers = headers;
         }
 
         public async Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default(CancellationToken))
@@ -37,11 +36,11 @@ namespace HttpBatchHandler
                 await sb.WriteAsync(_httpVersion);
                 await sb.WriteAsync(' ');
                 // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-                await sb.WriteAsync(_statusCode.ToString());
+                await sb.WriteAsync(StatusCode.ToString());
                 await sb.WriteAsync(' ');
                 await sb.WriteAsync(_reasonPhrase);
                 await sb.WriteAsync(Crlf);
-                foreach (var header in _headers)
+                foreach (var header in Headers)
                 {
                     await sb.WriteAsync(header.Key);
                     await sb.WriteAsync(": ");

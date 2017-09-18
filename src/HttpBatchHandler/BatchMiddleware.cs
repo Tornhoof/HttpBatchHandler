@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using HttpBatchHandler.Events;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -140,6 +141,7 @@ namespace HttpBatchHandler
             output.Set(input.Get<IHttpRequestIdentifierFeature>());
             output.Set(input.Get<IAuthenticationFeature>());
             output.Set(input.Get<IHttpAuthenticationFeature>());
+            output.Set<IItemsFeature>(new ItemsFeature()); // per request?
             return output;
         }
     }

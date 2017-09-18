@@ -25,7 +25,6 @@ namespace HttpBatchHandler
 
             var contextFeatures = new FeatureCollection(featureCollection);
             contextFeatures.Set(requestFeature);
-            contextFeatures.Set(requestFeature);
             _responseFeature = new ResponseFeature();
             contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
             var requestLifetimeFeature = new HttpRequestLifetimeFeature();
