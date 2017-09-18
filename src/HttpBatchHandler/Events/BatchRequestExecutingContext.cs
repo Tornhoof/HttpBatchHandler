@@ -1,11 +1,16 @@
-﻿using Microsoft.AspNetCore.Http.Features;
+﻿using Microsoft.AspNetCore.Http;
 
 namespace HttpBatchHandler.Events
 {
     public class BatchRequestExecutingContext
     {
-        public IHttpRequestFeature Request { get; set; }
-        public IFeatureCollection Features { get; set; }
+        /// <summary>
+        /// The individual request
+        /// </summary>
+        public HttpRequest Request { get; set; }
+        /// <summary>
+        /// State
+        /// </summary>
         public object State { get; set; }
     }
 }

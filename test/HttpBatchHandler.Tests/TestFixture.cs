@@ -19,8 +19,9 @@ namespace HttpBatchHandler.Tests
             _disposable.Start();
         }
 
-        public HttpClient HttpClient { get; } = new HttpClient();
         public Uri BaseUri { get; } = new Uri("http://localhost:12345");
+
+        public HttpClient HttpClient { get; } = new HttpClient();
 
         public void Dispose()
         {

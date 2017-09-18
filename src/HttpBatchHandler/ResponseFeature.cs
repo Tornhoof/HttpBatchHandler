@@ -11,15 +11,19 @@ namespace HttpBatchHandler
         private Func<Task> _responseCompletedAsync = () => Task.FromResult(true);
         private Func<Task> _responseStartingAsync = () => Task.FromResult(true);
 
-        public ResponseFeature(string protocol)
+        internal ResponseFeature(string httpVersion, int statusCode, string reasonPhrase, Stream content,
+            IHeaderDictionary headers)
         {
-            Headers = new HeaderDictionary();
-            Body = new MemoryStream();
-            Protocol = protocol;
+            Protocol = httpVersion;
+            StatusCode = statusCode;
+            ReasonPhrase = reasonPhrase;
+            Body = content;
+            Headers = headers;
+        }
 
-            // 200 is the default status code all the way down to the host, so we set it
-            // here to be consistent with the rest of the hosts when writing tests.
-            StatusCode = 200;
+        public ResponseFeature(string protocol) : this(protocol, StatusCodes.Status200OK, null, new MemoryStream(),
+            new HeaderDictionary())
+        {
         }
 
         public int StatusCode { get; set; }

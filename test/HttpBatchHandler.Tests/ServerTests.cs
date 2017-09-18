@@ -12,9 +12,9 @@ using Xunit.Abstractions;
 
 namespace HttpBatchHandler.Tests
 {
-    public class Tests : IClassFixture<TestFixture>
+    public class ServerTests : IClassFixture<TestFixture>
     {
-        public Tests(TestFixture fixture, ITestOutputHelper outputHelper)
+        public ServerTests(TestFixture fixture, ITestOutputHelper outputHelper)
         {
             _fixture = fixture;
             _outputHelper = outputHelper;
@@ -62,12 +62,12 @@ namespace HttpBatchHandler.Tests
 
         protected class BatchResult
         {
-            public string ResponsePayload { get; set; }
-            public HttpStatusCode StatusCode { get; set; }
-            public HttpResponseHeaders ResponseHeaders { get; set; }
             public HttpContentHeaders ContentHeaders { get; set; }
 
             public bool IsSuccessStatusCode => (int) StatusCode >= 200 && (int) StatusCode <= 299;
+            public HttpResponseHeaders ResponseHeaders { get; set; }
+            public string ResponsePayload { get; set; }
+            public HttpStatusCode StatusCode { get; set; }
         }
 
         private async Task<BatchResult[]> ReadResponseAsync(MultipartMemoryStreamProvider provider,
