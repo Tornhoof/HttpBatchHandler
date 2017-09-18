@@ -13,6 +13,7 @@ using Xunit;
 
 namespace HttpBatchHandler.Tests
 {
+    // https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata/
     public class MultipartParserTests
     {
         [Fact]

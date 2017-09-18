@@ -17,10 +17,12 @@
 
   <ItemGroup>
     <None Remove="MultipartRequest.txt" />
+    <None Remove="MultipartResponse.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="MultipartRequest.txt" />
+    <EmbeddedResource Include="MultipartResponse.txt" />
   </ItemGroup>
 
   <ItemGroup>

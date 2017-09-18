@@ -30,7 +30,7 @@ namespace HttpBatchHandler
         {
             using (var sb = new StreamWriter(stream, Encoding.ASCII, 8192, true))
             {
-                await sb.WriteAsync("Content-Type: application/http; msgType=response");
+                await sb.WriteAsync("Content-Type: application/http; msgtype=response");
                 await sb.WriteAsync(Crlf);
                 await sb.WriteAsync(Crlf);
                 await sb.WriteAsync(_httpVersion);
