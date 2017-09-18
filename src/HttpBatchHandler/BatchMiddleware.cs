@@ -53,7 +53,7 @@ namespace HttpBatchHandler
                 return;
             }
             var startContext = new BatchStartContext();
-            await _options.Events.OnBatchStart(startContext);
+            await _options.Events.BatchStart(startContext);
             Exception exception = null;
             var cancellationToken = httpContext.RequestAborted;
 
@@ -75,7 +75,7 @@ namespace HttpBatchHandler
                             Features = CreateDefaultFeatures(httpContext.Features),
                             State = startContext.State,
                         };
-                        await _options.Events.OnBatchRequestExecuting(executingContext);
+                        await _options.Events.BatchRequestExecuting(executingContext);
                         using (var state =
                             new RequestState(section.RequestFeature, _factory, executingContext.Features))
                         {
@@ -98,7 +98,7 @@ namespace HttpBatchHandler
                                 }
                                 finally
                                 {
-                                    await _options.Events.OnBatchRequestExecuted(executedContext);
+                                    await _options.Events.BatchRequestExecuted(executedContext);
                                     abort = executedContext.Abort;
                                 }
                                 if (abort)
@@ -122,7 +122,7 @@ namespace HttpBatchHandler
                         Exception = exception,
                         State = startContext.State,
                     };
-                    await _options.Events.OnBatchEnd(endContext);
+                    await _options.Events.BatchEnd(endContext);
                     httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
                     httpContext.Response.StatusCode = endContext.StatusCode;
                     if (endContext.WriteBody)
