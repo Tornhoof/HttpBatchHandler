@@ -26,32 +26,17 @@ namespace HttpBatchHandler
         {
         }
 
-        public int StatusCode { get; set; }
-
-        public string ReasonPhrase { get; set; }
-
-        public IHeaderDictionary Headers { get; set; }
-
         public Stream Body { get; set; }
 
         public bool HasStarted { get; private set; }
 
+        public IHeaderDictionary Headers { get; set; }
+
         public string Protocol { get; set; }
 
-        public void OnStarting(Func<object, Task> callback, object state)
-        {
-            if (HasStarted)
-            {
-                throw new InvalidOperationException();
-            }
+        public string ReasonPhrase { get; set; }
 
-            var prior = _responseStartingAsync;
-            _responseStartingAsync = async () =>
-            {
-                await callback(state);
-                await prior();
-            };
-        }
+        public int StatusCode { get; set; }
 
         public void OnCompleted(Func<object, Task> callback, object state)
         {
@@ -69,15 +54,30 @@ namespace HttpBatchHandler
             };
         }
 
-        public async Task FireOnSendingHeadersAsync()
+        public void OnStarting(Func<object, Task> callback, object state)
         {
-            await _responseStartingAsync();
-            HasStarted = true;
+            if (HasStarted)
+            {
+                throw new InvalidOperationException();
+            }
+
+            var prior = _responseStartingAsync;
+            _responseStartingAsync = async () =>
+            {
+                await callback(state);
+                await prior();
+            };
         }
 
         public Task FireOnResponseCompletedAsync()
         {
             return _responseCompletedAsync();
+        }
+
+        public async Task FireOnSendingHeadersAsync()
+        {
+            await _responseStartingAsync();
+            HasStarted = true;
         }
     }
 }

@@ -1,14 +1,14 @@
-﻿using HttpBatchHandler.Events;
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using HttpBatchHandler.Events;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Net.Http.Headers;
 using NSubstitute;
 using NSubstitute.Core;
-using System;
-using System.IO;
-using System.Linq;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace HttpBatchHandler.Tests
@@ -97,7 +97,6 @@ namespace HttpBatchHandler.Tests
 
         private class ThrowExceptionEventHandler : MockedBatchEventHandler
         {
-
             public override Task BatchRequestExecuted(BatchRequestExecutedContext context)
             {
                 if (BatchRequestExecutedCount == 2)
@@ -111,13 +110,12 @@ namespace HttpBatchHandler.Tests
 
         private class MockedBatchEventHandler : BatchMiddlewareEvents
         {
+            private readonly Guid _state = Guid.NewGuid();
             public int BatchEndCount { get; private set; }
             public int BatchRequestExecutedCount { get; private set; }
             public int BatchRequestExecutingCount { get; private set; }
-            public int BatchStartCount { get; private set; }
             public int BatchRequestPreparationCount { get; private set; }
-
-            private readonly Guid _state = Guid.NewGuid();
+            public int BatchStartCount { get; private set; }
 
             public override async Task BatchEnd(BatchEndContext context)
             {
@@ -135,13 +133,6 @@ namespace HttpBatchHandler.Tests
                 }
                 Assert.Equal(_state, context.State);
                 await base.BatchEnd(context);
-            }
-
-            public override Task BatchRequestPreparation(BatchRequestPreparationContext context)
-            {
-                BatchRequestPreparationCount += 1;
-                Assert.Equal(_state, context.State);
-                return base.BatchRequestPreparation(context);
             }
 
             public override Task BatchRequestExecuted(BatchRequestExecutedContext context)
@@ -163,11 +154,70 @@ namespace HttpBatchHandler.Tests
                 return base.BatchRequestExecuting(context);
             }
 
+            public override Task BatchRequestPreparation(BatchRequestPreparationContext context)
+            {
+                BatchRequestPreparationCount += 1;
+                Assert.Equal(_state, context.State);
+                return base.BatchRequestPreparation(context);
+            }
+
             public override Task BatchStart(BatchStartContext context)
             {
                 BatchStartCount += 1;
                 context.State = _state;
                 return base.BatchStart(context);
+            }
+        }
+
+        [Fact]
+        public async Task AbortException()
+        {
+            var requestFeature = new HttpRequestFeature {Path = "/api/batch"};
+            requestFeature.Headers.Add(HeaderNames.ContentType,
+                "multipart/mixed; boundary=\"batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e\"");
+            requestFeature.Body = GetType().Assembly
+                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt");
+            var responseFeature = new HttpResponseFeature();
+            var mockedEvents = new ThrowExceptionEventHandler();
+            using (responseFeature.Body = new MemoryStream())
+            {
+                await AssertExecution(requestFeature, responseFeature, mockedEvents,
+                    CreateFirstResponse(),
+                    CreateSecondResponse(),
+                    CreateThirdResponse(),
+                    CreateFourthResponse()).ConfigureAwait(false);
+                Assert.Equal(StatusCodes.Status500InternalServerError, responseFeature.StatusCode);
+                Assert.Equal(1, mockedEvents.BatchEndCount);
+                Assert.Equal(1, mockedEvents.BatchStartCount);
+                Assert.Equal(3, mockedEvents.BatchRequestPreparationCount);
+                Assert.Equal(3, mockedEvents.BatchRequestExecutingCount);
+                Assert.Equal(2, mockedEvents.BatchRequestExecutedCount);
+            }
+        }
+
+        [Fact]
+        public async Task AbortNonSuccessStatusCode()
+        {
+            var requestFeature = new HttpRequestFeature {Path = "/api/batch"};
+            requestFeature.Headers.Add(HeaderNames.ContentType,
+                "multipart/mixed; boundary=\"batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e\"");
+            requestFeature.Body = GetType().Assembly
+                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt");
+            var responseFeature = new HttpResponseFeature();
+            var mockedEvents = new MockedBatchEventHandler();
+            using (responseFeature.Body = new MemoryStream())
+            {
+                await AssertExecution(requestFeature, responseFeature, mockedEvents,
+                    CreateFirstResponse(),
+                    CreateInternalServerResponse(),
+                    CreateThirdResponse(),
+                    CreateFourthResponse()).ConfigureAwait(false);
+                Assert.Equal(StatusCodes.Status500InternalServerError, responseFeature.StatusCode);
+                Assert.Equal(1, mockedEvents.BatchEndCount);
+                Assert.Equal(1, mockedEvents.BatchStartCount);
+                Assert.Equal(2, mockedEvents.BatchRequestPreparationCount);
+                Assert.Equal(2, mockedEvents.BatchRequestExecutingCount);
+                Assert.Equal(2, mockedEvents.BatchRequestExecutedCount);
             }
         }
 
@@ -222,58 +272,6 @@ namespace HttpBatchHandler.Tests
                 Assert.Equal(4, mockedEvents.BatchRequestPreparationCount);
                 Assert.Equal(4, mockedEvents.BatchRequestExecutingCount);
                 Assert.Equal(4, mockedEvents.BatchRequestExecutedCount);
-            }
-        }
-
-        [Fact]
-        public async Task AbortNonSuccessStatusCode()
-        {
-            var requestFeature = new HttpRequestFeature { Path = "/api/batch" };
-            requestFeature.Headers.Add(HeaderNames.ContentType,
-                "multipart/mixed; boundary=\"batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e\"");
-            requestFeature.Body = GetType().Assembly
-                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt");
-            var responseFeature = new HttpResponseFeature();
-            var mockedEvents = new MockedBatchEventHandler();
-            using (responseFeature.Body = new MemoryStream())
-            {
-                await AssertExecution(requestFeature, responseFeature, mockedEvents,
-                    CreateFirstResponse(),
-                    CreateInternalServerResponse(),
-                    CreateThirdResponse(),
-                    CreateFourthResponse()).ConfigureAwait(false);
-                Assert.Equal(StatusCodes.Status500InternalServerError, responseFeature.StatusCode);
-                Assert.Equal(1, mockedEvents.BatchEndCount);
-                Assert.Equal(1, mockedEvents.BatchStartCount);
-                Assert.Equal(2, mockedEvents.BatchRequestPreparationCount);
-                Assert.Equal(2, mockedEvents.BatchRequestExecutingCount);
-                Assert.Equal(2, mockedEvents.BatchRequestExecutedCount);
-            }
-        }
-
-        [Fact]
-        public async Task AbortException()
-        {
-            var requestFeature = new HttpRequestFeature { Path = "/api/batch" };
-            requestFeature.Headers.Add(HeaderNames.ContentType,
-                "multipart/mixed; boundary=\"batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e\"");
-            requestFeature.Body = GetType().Assembly
-                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt");
-            var responseFeature = new HttpResponseFeature();
-            var mockedEvents = new ThrowExceptionEventHandler();
-            using (responseFeature.Body = new MemoryStream())
-            {
-                await AssertExecution(requestFeature, responseFeature, mockedEvents,
-                    CreateFirstResponse(),
-                    CreateSecondResponse(),
-                    CreateThirdResponse(),
-                    CreateFourthResponse()).ConfigureAwait(false);
-                Assert.Equal(StatusCodes.Status500InternalServerError, responseFeature.StatusCode);
-                Assert.Equal(1, mockedEvents.BatchEndCount);
-                Assert.Equal(1, mockedEvents.BatchStartCount);
-                Assert.Equal(3, mockedEvents.BatchRequestPreparationCount);
-                Assert.Equal(3, mockedEvents.BatchRequestExecutingCount);
-                Assert.Equal(2, mockedEvents.BatchRequestExecutedCount);
             }
         }
 

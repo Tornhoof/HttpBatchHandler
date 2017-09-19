@@ -14,8 +14,8 @@ namespace HttpBatchHandler
     public class BatchMiddleware
     {
         private readonly IHttpContextFactory _factory;
-        private readonly BatchMiddlewareOptions _options;
         private readonly RequestDelegate _next;
+        private readonly BatchMiddlewareOptions _options;
 
         public BatchMiddleware(RequestDelegate next, IHttpContextFactory factory, BatchMiddlewareOptions options)
         {
@@ -32,6 +32,17 @@ namespace HttpBatchHandler
                 return _next.Invoke(httpContext);
             }
             return InvokeBatchAsync(httpContext);
+        }
+
+        private FeatureCollection CreateDefaultFeatures(IFeatureCollection input)
+        {
+            var output = new FeatureCollection();
+            output.Set(input.Get<IServiceProvidersFeature>());
+            output.Set(input.Get<IHttpRequestIdentifierFeature>());
+            output.Set(input.Get<IAuthenticationFeature>());
+            output.Set(input.Get<IHttpAuthenticationFeature>());
+            output.Set<IItemsFeature>(new ItemsFeature()); // per request?
+            return output;
         }
 
         /// <summary>
@@ -59,7 +70,7 @@ namespace HttpBatchHandler
             };
             await _options.Events.BatchStart(startContext);
             Exception exception = null;
-            bool abort = false;
+            var abort = false;
             var cancellationToken = httpContext.RequestAborted;
 
             var reader = new MultipartReader(boundary, httpContext.Request.Body);
@@ -76,7 +87,7 @@ namespace HttpBatchHandler
                         {
                             RequestFeature = section.RequestFeature,
                             Features = CreateDefaultFeatures(httpContext.Features),
-                            State = startContext.State,
+                            State = startContext.State
                         };
                         await _options.Events.BatchRequestPreparation(preparationContext);
                         using (var state =
@@ -87,14 +98,14 @@ namespace HttpBatchHandler
                                 var executedContext = new BatchRequestExecutedContext
                                 {
                                     Request = state.Context.Request,
-                                    State = startContext.State,
+                                    State = startContext.State
                                 };
                                 try
                                 {
                                     var executingContext = new BatchRequestExecutingContext
                                     {
                                         Request = state.Context.Request,
-                                        State = startContext.State,
+                                        State = startContext.State
                                     };
                                     await _options.Events.BatchRequestExecuting(executingContext);
                                     await _next.Invoke(state.Context);
@@ -119,7 +130,6 @@ namespace HttpBatchHandler
                             }
                         }
                     }
-
                 }
                 catch (Exception ex)
                 {
@@ -132,7 +142,7 @@ namespace HttpBatchHandler
                         Exception = exception,
                         State = startContext.State,
                         IsAborted = abort,
-                        Response = httpContext.Response,
+                        Response = httpContext.Response
                     };
                     if (endContext.Exception != null)
                     {
@@ -146,17 +156,6 @@ namespace HttpBatchHandler
                     }
                 }
             }
-        }
-
-        private FeatureCollection CreateDefaultFeatures(IFeatureCollection input)
-        {
-            var output = new FeatureCollection();
-            output.Set(input.Get<IServiceProvidersFeature>());
-            output.Set(input.Get<IHttpRequestIdentifierFeature>());
-            output.Set(input.Get<IAuthenticationFeature>());
-            output.Set(input.Get<IHttpAuthenticationFeature>());
-            output.Set<IItemsFeature>(new ItemsFeature()); // per request?
-            return output;
         }
     }
 }

@@ -4,7 +4,7 @@ namespace HttpBatchHandler.Events
 {
     public class BatchMiddlewareOptions
     {
-        public PathString Match { get; set; } = "/api/batch";
         public BatchMiddlewareEvents Events { get; set; } = new BatchMiddlewareEvents();
+        public PathString Match { get; set; } = "/api/batch";
     }
 }

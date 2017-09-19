@@ -84,14 +84,6 @@ namespace HttpBatchHandler
             return uri;
         }
 
-
-        private static async Task<string[]> ReadRequestLineAsync(BufferedReadStream stream,
-            CancellationToken cancellationToken)
-        {
-            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken);
-            return line.Split(' ');
-        }
-
         private static async Task<Dictionary<string, StringValues>> ReadHeadersAsync(BufferedReadStream stream,
             CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -127,6 +119,14 @@ namespace HttpBatchHandler
             }
 
             return accumulator.GetResults();
+        }
+
+
+        private static async Task<string[]> ReadRequestLineAsync(BufferedReadStream stream,
+            CancellationToken cancellationToken)
+        {
+            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken);
+            return line.Split(' ');
         }
     }
 }

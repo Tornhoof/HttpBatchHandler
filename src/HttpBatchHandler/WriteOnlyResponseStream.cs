@@ -33,15 +33,10 @@ namespace HttpBatchHandler
             set => throw new NotSupportedException();
         }
 
-        public override void Flush()
+        public void Abort(Exception exception = null)
         {
-            CheckComplete();
-            CheckAborted();
-        }
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            throw new NotSupportedException();
+            _aborted = true;
+            _abortException = exception ?? new OperationCanceledException();
         }
 
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback,
@@ -50,7 +45,49 @@ namespace HttpBatchHandler
             throw new NotSupportedException();
         }
 
+        public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback,
+            object state)
+        {
+            var task = WriteAsync(buffer, offset, count, default(CancellationToken), state);
+            if (callback != null)
+            {
+                task.ContinueWith(callback.Invoke);
+            }
+            return task;
+        }
+
+        public void Complete()
+        {
+            _complete = true;
+        }
+
+        public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
+        {
+            while (_data.Count > 0)
+            {
+                var buffer = _data.Dequeue();
+                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken);
+                ArrayPool<byte>.Shared.Return(buffer.Array);
+            }
+        }
+
         public override int EndRead(IAsyncResult asyncResult)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void EndWrite(IAsyncResult asyncResult)
+        {
+            ((Task<object>) asyncResult).GetAwaiter().GetResult();
+        }
+
+        public override void Flush()
+        {
+            CheckComplete();
+            CheckAborted();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
         {
             throw new NotSupportedException();
         }
@@ -76,15 +113,45 @@ namespace HttpBatchHandler
             WriteAsync(buffer, offset, count, default(CancellationToken)).GetAwaiter().GetResult();
         }
 
-        public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback,
-            object state)
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            var task = WriteAsync(buffer, offset, count, default(CancellationToken), state);
-            if (callback != null)
+            CheckAborted();
+            CheckComplete();
+            var data = ArrayPool<byte>.Shared.Rent(count);
+            Buffer.BlockCopy(buffer, offset, data, 0, count);
+            var segment = new ArraySegment<byte>(data, 0, count);
+            _data.Enqueue(segment);
+            return Task.CompletedTask;
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                task.ContinueWith(callback.Invoke);
+                while (_data.Count > 0)
+                {
+                    var buffer = _data.Dequeue();
+                    ArrayPool<byte>.Shared.Return(buffer.Array);
+                }
+                _abortRequest();
             }
-            return task;
+            base.Dispose(disposing);
+        }
+
+        private void CheckAborted()
+        {
+            if (_aborted)
+            {
+                throw new IOException("Aborted", _abortException);
+            }
+        }
+
+        private void CheckComplete()
+        {
+            if (_complete)
+            {
+                throw new IOException("Completed");
+            }
         }
 
         private Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken, object state)
@@ -108,73 +175,6 @@ namespace HttpBatchHandler
                 }
             }, tcs, cancellationToken);
             return tcs.Task;
-        }
-
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            CheckAborted();
-            CheckComplete();
-            var data = ArrayPool<byte>.Shared.Rent(count);
-            Buffer.BlockCopy(buffer, offset, data, 0, count);
-            var segment = new ArraySegment<byte>(data, 0, count);
-            _data.Enqueue(segment);
-            return Task.CompletedTask;
-        }
-
-        public override void EndWrite(IAsyncResult asyncResult)
-        {
-            ((Task<object>) asyncResult).GetAwaiter().GetResult();
-        }
-
-        public override async Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
-        {
-            while (_data.Count > 0)
-            {
-                var buffer = _data.Dequeue();
-                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken);
-                ArrayPool<byte>.Shared.Return(buffer.Array);
-            }
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                while (_data.Count > 0)
-                {
-                    var buffer = _data.Dequeue();
-                    ArrayPool<byte>.Shared.Return(buffer.Array);
-                }
-                _abortRequest();
-            }
-            base.Dispose(disposing);
-        }
-
-        public void Complete()
-        {
-            _complete = true;
-        }
-
-        private void CheckComplete()
-        {
-            if (_complete)
-            {
-                throw new IOException("Completed");
-            }
-        }
-
-        public void Abort(Exception exception = null)
-        {
-            _aborted = true;
-            _abortException = exception ?? new OperationCanceledException();
-        }
-
-        private void CheckAborted()
-        {
-            if (_aborted)
-            {
-                throw new IOException("Aborted", _abortException);
-            }
         }
     }
 }

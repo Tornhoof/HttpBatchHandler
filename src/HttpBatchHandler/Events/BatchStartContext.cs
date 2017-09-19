@@ -5,11 +5,12 @@ namespace HttpBatchHandler.Events
     public class BatchStartContext
     {
         /// <summary>
-        /// The incoming multipart request
+        ///     The incoming multipart request
         /// </summary>
         public HttpRequest Request { get; set; }
+
         /// <summary>
-        /// State
+        ///     State
         /// </summary>
         public object State { get; set; }
     }

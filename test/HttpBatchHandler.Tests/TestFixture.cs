@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Net.Http;
-using HttpBatchHandler.Website;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 

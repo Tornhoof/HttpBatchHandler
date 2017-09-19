@@ -46,6 +46,20 @@ namespace HttpBatchHandler
             GC.SuppressFinalize(this);
         }
 
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _factory.Dispose(Context);
+            }
+        }
+
+        internal void Abort(Exception exception)
+        {
+            _pipelineFinished = true;
+            _responseStream.Abort(exception);
+        }
+
         internal void AbortRequest()
         {
             if (!_pipelineFinished)
@@ -55,33 +69,21 @@ namespace HttpBatchHandler
         }
 
         /// <summary>
-        /// FireOnSendingHeadersAsync is a bit late here, the remaining middlewares are already fully processed, the stream is complete
+        ///     FireOnSendingHeadersAsync is a bit late here, the remaining middlewares are already fully processed, the testhost does it on the first body stream write, which is more logical
+        ///     but I'm not certain about the added complexity
         /// </summary>
         internal async Task<ResponseFeature> ResponseTaskAsync()
         {
+            _pipelineFinished = true;
             await _responseFeature.FireOnSendingHeadersAsync();
             await _responseFeature.FireOnResponseCompletedAsync();
             _responseStream.Complete();
             return _responseFeature;
         }
 
-        internal void Abort(Exception exception)
-        {
-            _pipelineFinished = true;
-            _responseStream.Abort(exception);
-        }
-
         ~RequestState()
         {
             Dispose(false);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _factory.Dispose(Context);
-            }
         }
     }
 }

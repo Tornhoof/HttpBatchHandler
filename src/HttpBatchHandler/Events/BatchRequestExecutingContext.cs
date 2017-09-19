@@ -5,11 +5,12 @@ namespace HttpBatchHandler.Events
     public class BatchRequestExecutingContext
     {
         /// <summary>
-        /// The individual request
+        ///     The individual request
         /// </summary>
         public HttpRequest Request { get; set; }
+
         /// <summary>
-        /// State
+        ///     State
         /// </summary>
         public object State { get; set; }
     }
