@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using HttpBatchHandler.Multipart;
@@ -30,10 +31,7 @@ namespace HttpBatchHandler.Tests
                 .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt"))
             {
                 Assert.NotNull(refTextStream);
-                using (var tr = new StreamReader(refTextStream))
-                {
-                    input = tr.ReadToEnd();
-                }
+                input = await refTextStream.ReadAsStringAsync();
             }
             Assert.Equal(input, output);
         }

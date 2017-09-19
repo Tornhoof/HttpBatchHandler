@@ -18,10 +18,7 @@ namespace HttpBatchHandler.Multipart
             {
                 return null;
             }
-            using (var tr = new StreamReader(section.ResponseFeature.Body))
-            {
-                return await tr.ReadToEndAsync().ConfigureAwait(false);
-            }
+            return await section.ResponseFeature?.Body.ReadAsStringAsync(cancellationToken);
         }
 
         public static async Task<HttpApplicationResponseSection> ReadNextHttpApplicationResponseSectionAsync(

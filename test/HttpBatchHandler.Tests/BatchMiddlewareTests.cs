@@ -22,20 +22,6 @@ namespace HttpBatchHandler.Tests
 
         private readonly BatchMiddlewareTestFixture _fixture;
 
-        private static string GetTextFromStream(Stream stream)
-        {
-            string result;
-            Assert.NotNull(stream);
-            using (stream)
-            {
-                using (var tr = new StreamReader(stream))
-                {
-                    result = tr.ReadToEnd();
-                }
-            }
-            return result;
-        }
-
         private async Task AssertExecution(IHttpRequestFeature requestFeature, IHttpResponseFeature responseFeature,
             BatchMiddlewareEvents batchMiddlewareEvents,
             params ResponseFeature[] responseFeatures)
@@ -259,10 +245,10 @@ namespace HttpBatchHandler.Tests
                     CreateThirdResponse(),
                     CreateFourthResponse()).ConfigureAwait(false);
                 Assert.Equal(StatusCodes.Status200OK, responseFeature.StatusCode);
-                var refText = GetTextFromStream(GetType().Assembly
-                    .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt"));
+                var refText = await GetType().Assembly
+                    .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt").ReadAsStringAsync();
                 responseFeature.Body.Position = 0;
-                var outputText = GetTextFromStream(responseFeature.Body);
+                var outputText = await responseFeature.Body.ReadAsStringAsync();
                 var boundary = Regex.Match(outputText, "--(.+?)--").Groups[1].Value;
                 refText = refText.Replace("61cfbe41-7ea6-4771-b1c5-b43564208ee5",
                     boundary); // replace with current boundary;
