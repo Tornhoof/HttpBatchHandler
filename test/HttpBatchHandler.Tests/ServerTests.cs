@@ -12,8 +12,6 @@ using System.Threading.Tasks;
 using Microsoft.Net.Http.Headers;
 using Xunit;
 using Xunit.Abstractions;
-using ContentDispositionHeaderValue = System.Net.Http.Headers.ContentDispositionHeaderValue;
-using MediaTypeHeaderValue = System.Net.Http.Headers.MediaTypeHeaderValue;
 
 namespace HttpBatchHandler.Tests
 {
@@ -25,16 +23,6 @@ namespace HttpBatchHandler.Tests
         }
 
         private readonly ITestOutputHelper _outputHelper;
-
-        protected HttpRequestMessage BuildBatchMessage(HttpMethod method, Uri uri, string payload)
-        {
-            var message = new HttpRequestMessage(method, uri)
-            {
-                Content = payload != null ? new StringContent(payload, Encoding.UTF8, "application/json") : null
-            };
-            message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            return message;
-        }
 
         [Fact]
         public async Task Performance()
