@@ -54,7 +54,7 @@ namespace HttpBatchHandler.Website.Controllers
 
         // GET api/values/File/1
         [HttpPost("File/{id}")]
-        public async Task<IActionResult> UploadFile(int id)
+        public IActionResult UploadFile(int id)
         {
             if (HttpContext.Request.HasFormContentType)
             {
