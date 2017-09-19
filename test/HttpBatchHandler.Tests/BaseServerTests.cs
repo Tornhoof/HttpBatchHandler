@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -20,8 +21,9 @@ namespace HttpBatchHandler.Tests
             _fixture = fixture;
         }
 
-        protected async Task<BatchResults> SendBatchRequestAsync(IEnumerable<HttpRequestMessage> requestMessages,
-            CancellationToken cancellationToken = default(CancellationToken))
+        protected async Task<BatchResults> SendBatchRequestAsync<TBatchResult>(
+            IEnumerable<HttpRequestMessage> requestMessages,
+            CancellationToken cancellationToken = default(CancellationToken)) where TBatchResult : BatchResult, new()
         {
             var batchUri = new Uri(_fixture.BaseUri, "api/batch");
             using (var requestContent = new MultipartContent("batch", "batch_" + Guid.NewGuid()))
@@ -43,7 +45,7 @@ namespace HttpBatchHandler.Tests
                         var response = await responseMessage.Content.ReadAsMultipartAsync(cancellationToken)
                             .ConfigureAwait(false);
                         var responsePayload =
-                            await ReadResponseAsync(response, cancellationToken).ConfigureAwait(false);
+                            await ReadResponseAsync<TBatchResult>(response, cancellationToken).ConfigureAwait(false);
                         var statusCode = responseMessage.StatusCode;
                         return new BatchResults {ResponsePayload = responsePayload, StatusCode = statusCode};
                     }
@@ -51,31 +53,54 @@ namespace HttpBatchHandler.Tests
             }
         }
 
-        private async Task<BatchResult[]> ReadResponseAsync(MultipartReader reader,
-            CancellationToken cancellationToken = default(CancellationToken))
+        private async Task<TBatchResult[]> ReadResponseAsync<TBatchResult>(MultipartReader reader,
+            CancellationToken cancellationToken = default(CancellationToken)) where TBatchResult : BatchResult, new()
         {
-            var result = new List<BatchResult>();
+            var result = new List<TBatchResult>();
             HttpApplicationResponseSection section;
             while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync(cancellationToken)) !=
                    null)
             {
-                var content = await section.ReadAsStringAsync(cancellationToken);
-                result.Add(new BatchResult
+                var batchResult = new TBatchResult
                 {
-                    ResponsePayload = content,
                     StatusCode = section.ResponseFeature.StatusCode,
                     Headers = section.ResponseFeature.Headers
-                });
+                };
+                await batchResult.FillAsync(section.ResponseFeature.Body);
+                result.Add(batchResult);
             }
             return result.ToArray();
         }
 
-        protected class BatchResult
+        protected abstract class BatchResult
         {
             public IHeaderDictionary Headers { get; set; }
             public bool IsSuccessStatusCode => StatusCode >= 200 && StatusCode <= 299;
-            public string ResponsePayload { get; set; }
             public int StatusCode { get; set; }
+
+            public abstract Task FillAsync(Stream data);
+        }
+
+        protected class StringBatchResult : BatchResult
+        {
+            public string ResponsePayload { get; private set; }
+
+            public override async Task FillAsync(Stream data)
+            {
+                ResponsePayload = await data.ReadAsStringAsync();
+            }
+        }
+
+        protected class StreamBatchResult : BatchResult
+        {
+            public Stream ResponsePayload { get; private set; }
+
+            public override async Task FillAsync(Stream data)
+            {
+                ResponsePayload = new MemoryStream();
+                await data.CopyToAsync(ResponsePayload);
+                ResponsePayload.Position = 0;
+            }
         }
 
         protected class BatchResults

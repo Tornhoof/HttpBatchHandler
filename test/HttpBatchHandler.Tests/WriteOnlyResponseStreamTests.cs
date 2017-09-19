@@ -44,7 +44,7 @@ namespace HttpBatchHandler.Tests
         }
 
         [Fact]
-        public async Task IsAborted()
+        public void IsAborted()
         {
             var isAborted = false;
             Action abortRequest = () => isAborted = true;
