@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HttpBatchHandler
+namespace HttpBatchHandler.Multipart
 {
-    internal class MultipartWriter : IDisposable
+    public class MultipartWriter : IDisposable
     {
         private readonly byte[] _endBoundary;
         private readonly Queue<IMultipart> _parts = new Queue<IMultipart>();

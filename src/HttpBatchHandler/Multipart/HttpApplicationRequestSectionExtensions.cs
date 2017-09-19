@@ -10,9 +10,9 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
-namespace HttpBatchHandler
+namespace HttpBatchHandler.Multipart
 {
-    internal static class HttpApplicationRequestSectionExtensions
+    public static class HttpApplicationRequestSectionExtensions
     {
         private const int DefaultBufferSize = 1024 * 4;
 

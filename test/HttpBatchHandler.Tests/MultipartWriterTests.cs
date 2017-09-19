@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using HttpBatchHandler.Multipart;
 using Xunit;
 
 namespace HttpBatchHandler.Tests

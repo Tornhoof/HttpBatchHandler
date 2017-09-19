@@ -5,9 +5,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 
-namespace HttpBatchHandler
+namespace HttpBatchHandler.Multipart
 {
-    internal class HttpApplicationMultipart : IMultipart
+    public class HttpApplicationMultipart : IMultipart
     {
         private static readonly char[] Crlf = "\r\n".ToCharArray();
         private readonly Stream _content;

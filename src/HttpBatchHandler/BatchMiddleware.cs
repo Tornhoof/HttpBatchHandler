@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using HttpBatchHandler.Events;
+using HttpBatchHandler.Multipart;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
