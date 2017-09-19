@@ -18,7 +18,6 @@ namespace HttpBatchHandler.Tests
             _outputHelper = outputHelper;
         }
 
-        private readonly TestFixture _fixture;
         private readonly ITestOutputHelper _outputHelper;
 
         protected HttpRequestMessage BuildBatchMessage(HttpMethod method, Uri uri, string payload)

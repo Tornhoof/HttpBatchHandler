@@ -4,16 +4,27 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Primitives;
 using Microsoft.Net.Http.Headers;
 
 namespace HttpBatchHandler.Multipart
 {
-    public static class HttpApplicationRequestSectionExtensions
+    public static class HttpApplicationResponseSectionExtensions
     {
-        public static async Task<HttpApplicationRequestSection> ReadNextHttpApplicationRequestSectionAsync(
+        public static async Task<string> ReadAsStringAsync(this HttpApplicationResponseSection section,
+            CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (section.ResponseFeature?.Body == null)
+            {
+                return null;
+            }
+            using (var tr = new StreamReader(section.ResponseFeature.Body))
+            {
+                return await tr.ReadToEndAsync().ConfigureAwait(false);
+            }
+        }
+
+        public static async Task<HttpApplicationResponseSection> ReadNextHttpApplicationResponseSectionAsync(
             this MultipartReader reader, CancellationToken cancellationToken = default(CancellationToken))
         {
             var section = await reader.ReadNextSectionAsync(cancellationToken);
@@ -31,58 +42,33 @@ namespace HttpBatchHandler.Multipart
             var param = contentTypeHeader.Parameters.SingleOrDefault(a =>
                 a.Name.HasValue && a.Value.HasValue &&
                 StringComparer.OrdinalIgnoreCase.Equals(a.Name.Value, "msgtype") &&
-                StringComparer.OrdinalIgnoreCase.Equals(a.Value.Value, "request"));
+                StringComparer.OrdinalIgnoreCase.Equals(a.Value.Value, "response"));
             if (param == null)
             {
                 throw new InvalidDataException("Invalid Content-Type.");
             }
             var bufferedStream = new BufferedReadStream(section.Body, SectionHelper.DefaultBufferSize);
-            var requestLineParts = await ReadRequestLineAsync(bufferedStream, cancellationToken);
-            if (requestLineParts.Length != 3)
+            var responseLine = await ReadResponseLineAsync(bufferedStream, cancellationToken);
+            if (responseLine.Length != 3)
             {
                 throw new InvalidDataException("Invalid request line.");
             }
-            // Validation of the request line parts necessary?
             var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken);
-            if (!headers.TryGetValue(HeaderNames.Host, out var hostHeader))
+            return new HttpApplicationResponseSection
             {
-                throw new InvalidDataException("No Host Header");
-            }
-            var uri = BuildUri(hostHeader, requestLineParts[1]);
-            return new HttpApplicationRequestSection
-            {
-                RequestFeature = new HttpRequestFeature
+                ResponseFeature = new ResponseFeature
                 {
                     Body = bufferedStream,
-                    Headers = new HeaderDictionary(headers),
-                    Method = requestLineParts[0],
-                    Protocol = requestLineParts[2],
-                    Path = uri.AbsolutePath,
-                    PathBase = string.Empty,
-                    Scheme = uri.Scheme,
-                    QueryString = uri.Query
+                    Protocol = responseLine[0],
+                    StatusCode = int.Parse(responseLine[1]),
+                    ReasonPhrase = responseLine[2],
+                    Headers = new HeaderDictionary(headers)
                 }
             };
         }
 
-        private static Uri BuildUri(StringValues hostHeader, string pathAndQuery)
-        {
-            if (hostHeader.Count != 1)
-            {
-                throw new InvalidOperationException("Invalid Host Header");
-            }
-            var hostString = new HostString(hostHeader.Single());
-            if (!hostString.HasValue)
-            {
-                return null;
-            }
-            var fullUri = $"http://{hostString.ToUriComponent()}{pathAndQuery}";
-            var uri = new Uri(fullUri);
-            return uri;
-        }
 
-
-        private static async Task<string[]> ReadRequestLineAsync(BufferedReadStream stream,
+        private static async Task<string[]> ReadResponseLineAsync(BufferedReadStream stream,
             CancellationToken cancellationToken)
         {
             var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken);

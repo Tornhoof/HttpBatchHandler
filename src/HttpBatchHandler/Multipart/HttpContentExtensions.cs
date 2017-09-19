@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.WebUtilities;
@@ -29,15 +27,6 @@ namespace HttpBatchHandler.Multipart
             return reader;
         }
 
-        private static bool IsMultipart(this HttpContentHeaders headers)
-        {
-            if (headers == null)
-            {
-                throw new ArgumentNullException(nameof(headers));
-            }
-            return headers.ContentType.MediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase);
-        }
-
         private static string GetMultipartBoundary(this HttpContentHeaders headers)
         {
             if (headers == null)
@@ -51,6 +40,15 @@ namespace HttpBatchHandler.Multipart
                 return boundaryParam?.Value.Trim('"');
             }
             return null;
+        }
+
+        private static bool IsMultipart(this HttpContentHeaders headers)
+        {
+            if (headers == null)
+            {
+                throw new ArgumentNullException(nameof(headers));
+            }
+            return headers.ContentType.MediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

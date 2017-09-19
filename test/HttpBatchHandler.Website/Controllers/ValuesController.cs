@@ -6,6 +6,12 @@ namespace HttpBatchHandler.Website.Controllers
     [Route("api/[controller]")]
     public class ValuesController : Controller
     {
+        // DELETE api/values/5
+        [HttpDelete("{id}")]
+        public void Delete(int id)
+        {
+        }
+
         // GET api/values
         [HttpGet]
         public IEnumerable<string> Get()
@@ -13,16 +19,16 @@ namespace HttpBatchHandler.Website.Controllers
             return new[] {"value1", "value2"};
         }
 
-        // GET api/values/query?id=5
-        [HttpGet("query")]
-        public string GetFromQuery([FromQuery] int id)
+        // GET api/values/5
+        [HttpGet("{id}")]
+        public string Get(int id)
         {
             return id.ToString();
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        // GET api/values/query?id=5
+        [HttpGet("query")]
+        public string GetFromQuery([FromQuery] int id)
         {
             return id.ToString();
         }
@@ -36,12 +42,6 @@ namespace HttpBatchHandler.Website.Controllers
         // PUT api/values/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
         {
         }
     }

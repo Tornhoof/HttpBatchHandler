@@ -13,7 +13,7 @@ namespace HttpBatchHandler.Tests
 {
     public abstract class BaseServerTests<TFixture> : IClassFixture<TestFixture> where TFixture : TestFixture
     {
-        private readonly TFixture _fixture;
+        protected readonly TFixture _fixture;
 
         protected BaseServerTests(TFixture fixture)
         {
@@ -51,10 +51,23 @@ namespace HttpBatchHandler.Tests
             }
         }
 
-        protected class BatchResults
+        private async Task<BatchResult[]> ReadResponseAsync(MultipartReader reader,
+            CancellationToken cancellationToken = default(CancellationToken))
         {
-            public BatchResult[] ResponsePayload { get; set; }
-            public HttpStatusCode StatusCode { get; set; }
+            var result = new List<BatchResult>();
+            HttpApplicationResponseSection section;
+            while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync(cancellationToken)) !=
+                   null)
+            {
+                var content = await section.ReadAsStringAsync(cancellationToken);
+                result.Add(new BatchResult
+                {
+                    ResponsePayload = content,
+                    StatusCode = section.ResponseFeature.StatusCode,
+                    Headers = section.ResponseFeature.Headers
+                });
+            }
+            return result.ToArray();
         }
 
         protected class BatchResult
@@ -65,23 +78,10 @@ namespace HttpBatchHandler.Tests
             public int StatusCode { get; set; }
         }
 
-        private async Task<BatchResult[]> ReadResponseAsync(MultipartReader reader,
-            CancellationToken cancellationToken = default(CancellationToken))
+        protected class BatchResults
         {
-            var result = new List<BatchResult>();
-            HttpApplicationResponseSection section;
-            while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync(cancellationToken)) !=
-                   null)
-            {
-                string content = await section.ReadAsStringAsync(cancellationToken);
-                result.Add(new BatchResult
-                {
-                    ResponsePayload = content,
-                    StatusCode = section.ResponseFeature.StatusCode,
-                    Headers = section.ResponseFeature.Headers,
-                });
-            }
-            return result.ToArray();
+            public BatchResult[] ResponsePayload { get; set; }
+            public HttpStatusCode StatusCode { get; set; }
         }
     }
 }

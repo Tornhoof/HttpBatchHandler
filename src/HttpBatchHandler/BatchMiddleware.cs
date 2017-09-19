@@ -73,7 +73,6 @@ namespace HttpBatchHandler
             Exception exception = null;
             var abort = false;
             var cancellationToken = httpContext.RequestAborted;
-
             var reader = new MultipartReader(boundary, httpContext.Request.Body);
             using (var writer = new MultipartWriter("batch", Guid.NewGuid().ToString()))
             {

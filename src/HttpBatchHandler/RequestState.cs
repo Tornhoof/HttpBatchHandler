@@ -25,7 +25,7 @@ namespace HttpBatchHandler
 
             var contextFeatures = new FeatureCollection(featureCollection);
             contextFeatures.Set(requestFeature);
-            _responseFeature = new ResponseFeature(requestFeature.Protocol);
+            _responseFeature = new ResponseFeature {Protocol = requestFeature.Protocol};
             contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
             var requestLifetimeFeature = new HttpRequestLifetimeFeature();
             contextFeatures.Set<IHttpRequestLifetimeFeature>(requestLifetimeFeature);
@@ -69,7 +69,8 @@ namespace HttpBatchHandler
         }
 
         /// <summary>
-        ///     FireOnSendingHeadersAsync is a bit late here, the remaining middlewares are already fully processed, the testhost does it on the first body stream write, which is more logical
+        ///     FireOnSendingHeadersAsync is a bit late here, the remaining middlewares are already fully processed, the testhost
+        ///     does it on the first body stream write, which is more logical
         ///     but I'm not certain about the added complexity
         /// </summary>
         internal async Task<ResponseFeature> ResponseTaskAsync()

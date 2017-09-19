@@ -11,18 +11,17 @@ namespace HttpBatchHandler
         private Func<Task> _responseCompletedAsync = () => Task.FromResult(true);
         private Func<Task> _responseStartingAsync = () => Task.FromResult(true);
 
-        internal ResponseFeature(string httpVersion, int statusCode, string reasonPhrase, Stream content,
+        internal ResponseFeature(string protocol, int statusCode, string reasonPhrase, Stream content,
             IHeaderDictionary headers)
         {
-            Protocol = httpVersion;
+            Protocol = protocol;
             StatusCode = statusCode;
             ReasonPhrase = reasonPhrase;
             Body = content;
             Headers = headers;
         }
 
-        public ResponseFeature(string protocol) : this(protocol, StatusCodes.Status200OK, null, new MemoryStream(),
-            new HeaderDictionary())
+        public ResponseFeature()
         {
         }
 
@@ -30,7 +29,7 @@ namespace HttpBatchHandler
 
         public bool HasStarted { get; private set; }
 
-        public IHeaderDictionary Headers { get; set; }
+        public IHeaderDictionary Headers { get; set; } = new HeaderDictionary();
 
         public string Protocol { get; set; }
 
