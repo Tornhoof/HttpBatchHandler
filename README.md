@@ -7,3 +7,4 @@ HttpBatchHandler for  ASP .NET Core 2.0
 
 ## TODO
 - Edge case error handdling
+- The library should be probably split into two parts, one for the requests and one for the actual batchhandler
