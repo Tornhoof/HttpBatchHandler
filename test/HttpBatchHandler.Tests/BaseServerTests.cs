@@ -87,7 +87,10 @@ namespace HttpBatchHandler.Tests
 
             public override async Task FillAsync(Stream data)
             {
-                ResponsePayload = await data.ReadAsStringAsync();
+                using (data)
+                {
+                    ResponsePayload = await data.ReadAsStringAsync();
+                }
             }
         }
 
@@ -98,7 +101,10 @@ namespace HttpBatchHandler.Tests
             public override async Task FillAsync(Stream data)
             {
                 ResponsePayload = new MemoryStream();
-                await data.CopyToAsync(ResponsePayload);
+                using (data)
+                {
+                    await data.CopyToAsync(ResponsePayload);
+                }
                 ResponsePayload.Position = 0;
             }
         }
