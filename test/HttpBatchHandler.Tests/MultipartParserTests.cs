@@ -12,20 +12,22 @@ namespace HttpBatchHandler.Tests
     // https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata/
     public class MultipartParserTests
     {
-        private void InspectFirstRequest(HttpApplicationRequestSection obj)
+        private void InspectFirstRequest(HttpApplicationRequestSection obj, string pathBase)
         {
             Assert.Equal("GET", obj.RequestFeature.Method);
             Assert.Equal("/api/WebCustomers", obj.RequestFeature.Path);
+            Assert.Equal(pathBase, obj.RequestFeature.PathBase);
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
             Assert.Equal("?Query=Parts", obj.RequestFeature.QueryString);
             Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
         }
 
-        private void InspectSecondRequest(HttpApplicationRequestSection obj)
+        private void InspectSecondRequest(HttpApplicationRequestSection obj, string pathBase)
         {
             Assert.Equal("POST", obj.RequestFeature.Method);
             Assert.Equal("/api/WebCustomers", obj.RequestFeature.Path);
+            Assert.Equal(pathBase, obj.RequestFeature.PathBase);
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
             Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
@@ -37,10 +39,11 @@ namespace HttpBatchHandler.Tests
         }
 
 
-        private void InspectThirdRequest(HttpApplicationRequestSection obj)
+        private void InspectThirdRequest(HttpApplicationRequestSection obj, string pathBase)
         {
             Assert.Equal("PUT", obj.RequestFeature.Method);
             Assert.Equal("/api/WebCustomers/1", obj.RequestFeature.Path);
+            Assert.Equal(pathBase, obj.RequestFeature.PathBase);
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
             Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
@@ -51,30 +54,36 @@ namespace HttpBatchHandler.Tests
             Assert.Equal("Peter", deserialized.Name.ToString());
         }
 
-        private void InspectFourthRequest(HttpApplicationRequestSection obj)
+        private void InspectFourthRequest(HttpApplicationRequestSection obj, string pathBase)
         {
             Assert.Equal("DELETE", obj.RequestFeature.Method);
             Assert.Equal("/api/WebCustomers/2", obj.RequestFeature.Path);
+            Assert.Equal(pathBase, obj.RequestFeature.PathBase);
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
             Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
         }
 
-        [Fact]
-        public async Task Parse()
+        [Theory]
+        [InlineData(null, "MultipartRequest.txt")]
+        [InlineData("/path/base", "MultipartRequestPathBase.txt")]
+        public async Task Parse(string path, string file)
         {
             var reader = new MultipartReader("batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e",
-                GetType().Assembly.GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt"));
+                GetType().Assembly.GetManifestResourceStream(typeof(MultipartParserTests), file));
             var sections = new List<HttpApplicationRequestSection>();
 
             HttpApplicationRequestSection section;
-            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync()) != null)
+            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(path)) != null)
             {
                 sections.Add(section);
             }
             Assert.Equal(4, sections.Count);
-            Assert.Collection(sections, InspectFirstRequest, InspectSecondRequest, InspectThirdRequest,
-                InspectFourthRequest);
+            Assert.Collection(sections,
+                x => InspectFirstRequest(x, path),
+                x => InspectSecondRequest(x, path),
+                x => InspectThirdRequest(x, path),
+                x => InspectFourthRequest(x, path));
         }
     }
 }

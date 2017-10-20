@@ -74,7 +74,7 @@ namespace HttpBatchHandler
             var abort = false;
             var cancellationToken = httpContext.RequestAborted;
             var reader = new MultipartReader(boundary, httpContext.Request.Body);
-            // PathString.StartsWithSegments that we use below requires the base path to not end in a slash.
+            // PathString.StartsWithSegments that we use requires the base path to not end in a slash.
             var pathBase = httpContext.Request.PathBase;
             if (pathBase.HasValue && pathBase.Value.EndsWith("/"))
             {
