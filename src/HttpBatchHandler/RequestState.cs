@@ -10,7 +10,6 @@ namespace HttpBatchHandler
     {
         private readonly IHttpContextFactory _factory;
         private readonly CancellationTokenSource _requestAbortedSource;
-        private readonly IHttpRequestFeature _requestFeature;
         private readonly ResponseFeature _responseFeature;
         private readonly WriteOnlyResponseStream _responseStream;
         private bool _pipelineFinished;
@@ -18,7 +17,6 @@ namespace HttpBatchHandler
         internal RequestState(IHttpRequestFeature requestFeature, IHttpContextFactory factory,
             IFeatureCollection featureCollection)
         {
-            _requestFeature = requestFeature;
             _factory = factory;
             _requestAbortedSource = new CancellationTokenSource();
             _pipelineFinished = false;

@@ -27,7 +27,7 @@ namespace HttpBatchHandler.Website.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
+        [HttpGet("{id}", Name = "GetById")]
         public string Get(int id)
         {
             return id.ToString();
@@ -42,8 +42,10 @@ namespace HttpBatchHandler.Website.Controllers
 
         // POST api/values
         [HttpPost]
-        public void Post([FromBody] string value)
+        public IActionResult Post([FromBody] string value)
         {
+            var uri = Url.Link("GetById", new {id = 5});
+            return Created(uri, null);
         }
 
         // PUT api/values/5

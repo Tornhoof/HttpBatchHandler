@@ -6,27 +6,44 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace HttpBatchHandler.Tests
 {
-    public class TestFixture : IDisposable
+    public abstract class TestFixture : IDisposable
     {
         private readonly IWebHost _disposable;
 
-        public TestFixture()
+        public TestFixture(string pathBase)
         {
+            var port = RandomPortHelper.FindFreePort();
+            BaseUri = new Uri($"http://localhost:{port}" + pathBase);
+            var url = new UriBuilder(BaseUri)
+            {
+                Path = string.Empty
+            };
+
             _disposable = WebHost.CreateDefaultBuilder()
                 .UseStartup<Startup>()
-                .UseUrls(BaseUri.ToString())
+                .UseUrls(url.Uri.ToString())
+                .UseSetting("pathBase", pathBase)
                 .Build();
             _disposable.Start();
         }
 
-        public Uri BaseUri { get; } = new Uri("http://localhost:12345");
+        public Uri BaseUri { get; }
 
         public HttpClient HttpClient { get; } = new HttpClient();
 
+        public virtual void Dispose(bool dispose)
+        {
+            if (dispose)
+            {
+                _disposable?.Dispose();
+                HttpClient?.Dispose();
+            }
+        }
+
         public void Dispose()
         {
-            _disposable?.Dispose();
-            HttpClient?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }

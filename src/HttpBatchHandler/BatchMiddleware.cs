@@ -74,12 +74,18 @@ namespace HttpBatchHandler
             var abort = false;
             var cancellationToken = httpContext.RequestAborted;
             var reader = new MultipartReader(boundary, httpContext.Request.Body);
+            // PathString.StartsWithSegments that we use below requires the base path to not end in a slash.
+            var pathBase = httpContext.Request.PathBase;
+            if (pathBase.HasValue && pathBase.Value.EndsWith("/"))
+            {
+                pathBase = new PathString(pathBase.Value.Substring(0, pathBase.Value.Length - 1));
+            }
             using (var writer = new MultipartWriter("batch", Guid.NewGuid().ToString()))
             {
                 try
                 {
                     HttpApplicationRequestSection section;
-                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(cancellationToken)) !=
+                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(pathBase, cancellationToken)) !=
                            null)
                     {
                         httpContext.RequestAborted.ThrowIfCancellationRequested();

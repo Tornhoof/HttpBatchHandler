@@ -7,9 +7,12 @@ namespace HttpBatchHandler.Website
 {
     public class Startup
     {
+        private readonly string _pathBase;
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+            _pathBase = configuration.GetValue<string>("pathBase");
         }
 
         public IConfiguration Configuration { get; }
@@ -17,6 +20,10 @@ namespace HttpBatchHandler.Website
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            if (_pathBase != "/")
+            {
+                app.UsePathBase(_pathBase);
+            }
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

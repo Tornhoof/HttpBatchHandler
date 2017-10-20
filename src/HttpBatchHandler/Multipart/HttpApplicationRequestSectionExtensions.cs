@@ -14,7 +14,7 @@ namespace HttpBatchHandler.Multipart
     public static class HttpApplicationRequestSectionExtensions
     {
         public static async Task<HttpApplicationRequestSection> ReadNextHttpApplicationRequestSectionAsync(
-            this MultipartReader reader, CancellationToken cancellationToken = default(CancellationToken))
+            this MultipartReader reader, PathString pathBase = default(PathString), CancellationToken cancellationToken = default(CancellationToken))
         {
             var section = await reader.ReadNextSectionAsync(cancellationToken);
             if (section == null)
@@ -49,19 +49,29 @@ namespace HttpBatchHandler.Multipart
                 throw new InvalidDataException("No Host Header");
             }
             var uri = BuildUri(hostHeader, requestLineParts[1]);
+            var fullPath = PathString.FromUriComponent(uri);
+            var feature = new HttpRequestFeature
+            {
+                Body = bufferedStream,
+                Headers = new HeaderDictionary(headers),
+                Method = requestLineParts[0],
+                Protocol = requestLineParts[2],
+                Scheme = uri.Scheme,
+                QueryString = uri.Query
+            };
+            if (fullPath.StartsWithSegments(pathBase, out var remainder))
+            {
+                feature.PathBase = pathBase.Value;
+                feature.Path = remainder.Value;
+            }
+            else
+            {
+                feature.PathBase = string.Empty;
+                feature.Path = fullPath.Value;
+            }
             return new HttpApplicationRequestSection
             {
-                RequestFeature = new HttpRequestFeature
-                {
-                    Body = bufferedStream,
-                    Headers = new HeaderDictionary(headers),
-                    Method = requestLineParts[0],
-                    Protocol = requestLineParts[2],
-                    Path = uri.AbsolutePath,
-                    PathBase = string.Empty,
-                    Scheme = uri.Scheme,
-                    QueryString = uri.Query
-                }
+                RequestFeature = feature
             };
         }
 
