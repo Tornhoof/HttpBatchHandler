@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace HttpBatchHandler.Multipart
 {
@@ -25,6 +26,10 @@ namespace HttpBatchHandler.Multipart
             _httpVersion = httpVersion;
             StatusCode = statusCode;
             _reasonPhrase = reasonPhrase;
+            if (string.IsNullOrEmpty(_reasonPhrase))
+            {
+                _reasonPhrase = ReasonPhrases.GetReasonPhrase(statusCode);
+            }
             _content = content;
             Headers = headers;
         }
