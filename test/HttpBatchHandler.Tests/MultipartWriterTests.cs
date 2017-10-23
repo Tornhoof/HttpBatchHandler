@@ -1,8 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HttpBatchHandler.Multipart;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.WebUtilities;
 using Xunit;
 
 namespace HttpBatchHandler.Tests
@@ -34,6 +38,33 @@ namespace HttpBatchHandler.Tests
                 input = await refTextStream.ReadAsStringAsync();
             }
             Assert.Equal(input, output);
+        }
+
+
+        [Fact]
+        public async Task ParseExample()
+        {
+            var reader = new MultipartReader("61cfbe41-7ea6-4771-b1c5-b43564208ee5",
+                GetType().Assembly.GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt"));
+            var sections = new List<HttpApplicationResponseSection>();
+
+            HttpApplicationResponseSection section;
+            while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync()) != null)
+            {
+                sections.Add(section);
+            }
+            Assert.Equal(4, sections.Count);
+            Assert.Collection(sections, x => ElementInspector(x.ResponseFeature, CreateFirstResponse()),
+                x => ElementInspector(x.ResponseFeature, CreateSecondResponse()),
+                x => ElementInspector(x.ResponseFeature, CreateThirdResponse()),
+                x => ElementInspector(x.ResponseFeature, CreateFourthResponse()));
+        }
+
+        private void ElementInspector(IHttpResponseFeature input, ResponseFeature comparison)
+        {
+            Assert.Equal(comparison.StatusCode, input.StatusCode);
+            Assert.Equal(comparison.ReasonPhrase, input.ReasonPhrase);
+            Assert.Equal(comparison.Headers, input.Headers);
         }
     }
 }

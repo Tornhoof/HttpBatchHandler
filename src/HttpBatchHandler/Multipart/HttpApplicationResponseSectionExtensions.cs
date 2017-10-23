@@ -11,6 +11,7 @@ namespace HttpBatchHandler.Multipart
 {
     public static class HttpApplicationResponseSectionExtensions
     {
+        private static readonly char[] SpaceArray = new []{' '};
         public static async Task<string> ReadAsStringAsync(this HttpApplicationResponseSection section,
             CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -69,7 +70,7 @@ namespace HttpBatchHandler.Multipart
             CancellationToken cancellationToken)
         {
             var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken);
-            return line.Split(' ');
+            return line.Split(SpaceArray, 3);
         }
     }
 }
