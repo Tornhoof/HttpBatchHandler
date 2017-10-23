@@ -48,7 +48,7 @@ namespace HttpBatchHandler.Multipart
             {
                 throw new ArgumentNullException(nameof(headers));
             }
-            return headers.ContentType.MediaType.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase);
+            return headers.ContentType?.MediaType?.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase) ?? false;
         }
     }
 }
