@@ -13,16 +13,6 @@ namespace HttpBatchHandler.Multipart
     {
         private static readonly char[] SpaceArray = {' '};
 
-        public static async Task<string> ReadAsStringAsync(this HttpApplicationResponseSection section,
-            CancellationToken cancellationToken = default)
-        {
-            if (section.ResponseFeature?.Body == null)
-            {
-                return null;
-            }
-            return await section.ResponseFeature?.Body.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-        }
-
         public static async Task<HttpApplicationResponseSection> ReadNextHttpApplicationResponseSectionAsync(
             this MultipartReader reader, CancellationToken cancellationToken = default)
         {
