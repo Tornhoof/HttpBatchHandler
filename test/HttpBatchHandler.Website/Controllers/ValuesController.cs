@@ -86,7 +86,7 @@ namespace HttpBatchHandler.Website.Controllers
                     for (int i = 0; i < 10; i++)
                     {
                         random.NextBytes(buffer);
-                        await ms.WriteAsync(buffer, 0, buffer.Length);
+                        await ms.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
                     }
 
             ms.Position = 0;

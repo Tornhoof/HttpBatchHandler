@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using HttpBatchHandler.Multipart;
@@ -14,6 +12,13 @@ namespace HttpBatchHandler.Tests
     // https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata/
     public class MultipartWriterTests : BaseWriterTests
     {
+        private void ElementInspector(IHttpResponseFeature input, ResponseFeature comparison)
+        {
+            Assert.Equal(comparison.StatusCode, input.StatusCode);
+            Assert.Equal(comparison.ReasonPhrase, input.ReasonPhrase);
+            Assert.Equal(comparison.Headers, input.Headers);
+        }
+
         [Fact]
         public async Task CompareExample()
         {
@@ -35,7 +40,7 @@ namespace HttpBatchHandler.Tests
                 .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt"))
             {
                 Assert.NotNull(refTextStream);
-                input = await refTextStream.ReadAsStringAsync();
+                input = await refTextStream.ReadAsStringAsync().ConfigureAwait(false);
             }
             Assert.Equal(input, output);
         }
@@ -49,7 +54,7 @@ namespace HttpBatchHandler.Tests
             var sections = new List<HttpApplicationResponseSection>();
 
             HttpApplicationResponseSection section;
-            while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync()) != null)
+            while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync().ConfigureAwait(false)) != null)
             {
                 sections.Add(section);
             }
@@ -58,13 +63,6 @@ namespace HttpBatchHandler.Tests
                 x => ElementInspector(x.ResponseFeature, CreateSecondResponse()),
                 x => ElementInspector(x.ResponseFeature, CreateThirdResponse()),
                 x => ElementInspector(x.ResponseFeature, CreateFourthResponse()));
-        }
-
-        private void ElementInspector(IHttpResponseFeature input, ResponseFeature comparison)
-        {
-            Assert.Equal(comparison.StatusCode, input.StatusCode);
-            Assert.Equal(comparison.ReasonPhrase, input.ReasonPhrase);
-            Assert.Equal(comparison.Headers, input.Headers);
         }
     }
 }

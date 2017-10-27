@@ -34,17 +34,17 @@ namespace HttpBatchHandler.Multipart
             _parts.Enqueue(multipart);
         }
 
-        public async Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default)
         {
             while (_parts.Count > 0)
             {
                 using (var part = _parts.Dequeue())
                 {
-                    await stream.WriteAsync(_startBoundary, 0, _startBoundary.Length, cancellationToken);
-                    await part.CopyToAsync(stream, cancellationToken);
+                    await stream.WriteAsync(_startBoundary, 0, _startBoundary.Length, cancellationToken).ConfigureAwait(false);
+                    await part.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
                 }
             }
-            await stream.WriteAsync(_endBoundary, 0, _endBoundary.Length, cancellationToken);
+            await stream.WriteAsync(_endBoundary, 0, _endBoundary.Length, cancellationToken).ConfigureAwait(false);
         }
 
         protected virtual void Dispose(bool disposing)

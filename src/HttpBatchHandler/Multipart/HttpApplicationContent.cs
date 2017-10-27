@@ -31,39 +31,39 @@ namespace HttpBatchHandler.Multipart
         {
             using (var sb = new StreamWriter(stream, Encoding.ASCII, 8192, true))
             {
-                await sb.WriteAsync(_message.Method.Method);
-                await sb.WriteAsync(' ');
+                await sb.WriteAsync(_message.Method.Method).ConfigureAwait(false);
+                await sb.WriteAsync(' ').ConfigureAwait(false);
                 // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-                await sb.WriteAsync(_message.RequestUri.PathAndQuery);
-                await sb.WriteAsync(' ');
-                await sb.WriteAsync($"HTTP/{_message.Version}");
-                await sb.WriteAsync(Crlf);
-                await sb.WriteAsync($"Host: {_message.RequestUri.Authority}");
-                await sb.WriteAsync(Crlf);
+                await sb.WriteAsync(_message.RequestUri.PathAndQuery).ConfigureAwait(false);
+                await sb.WriteAsync(' ').ConfigureAwait(false);
+                await sb.WriteAsync($"HTTP/{_message.Version}").ConfigureAwait(false);
+                await sb.WriteAsync(Crlf).ConfigureAwait(false);
+                await sb.WriteAsync($"Host: {_message.RequestUri.Authority}").ConfigureAwait(false);
+                await sb.WriteAsync(Crlf).ConfigureAwait(false);
                 foreach (var header in _message.Headers)
                 {
-                    await sb.WriteAsync(header.Key);
-                    await sb.WriteAsync(": ");
-                    await sb.WriteAsync(string.Join(", ", header.Value));
-                    await sb.WriteAsync(Crlf);
+                    await sb.WriteAsync(header.Key).ConfigureAwait(false);
+                    await sb.WriteAsync(": ").ConfigureAwait(false);
+                    await sb.WriteAsync(string.Join(", ", header.Value)).ConfigureAwait(false);
+                    await sb.WriteAsync(Crlf).ConfigureAwait(false);
                 }
                 if (_message.Content?.Headers != null)
                 {
                     foreach (var header in _message.Content?.Headers)
                     {
-                        await sb.WriteAsync(header.Key);
-                        await sb.WriteAsync(": ");
-                        await sb.WriteAsync(string.Join(", ", header.Value));
-                        await sb.WriteAsync(Crlf);
+                        await sb.WriteAsync(header.Key).ConfigureAwait(false);
+                        await sb.WriteAsync(": ").ConfigureAwait(false);
+                        await sb.WriteAsync(string.Join(", ", header.Value)).ConfigureAwait(false);
+                        await sb.WriteAsync(Crlf).ConfigureAwait(false);
                     }
                 }
-                await sb.WriteAsync(Crlf);
+                await sb.WriteAsync(Crlf).ConfigureAwait(false);
             }
             if (_message.Content != null)
             {
-                using (var contentStream = await _message.Content.ReadAsStreamAsync())
+                using (var contentStream = await _message.Content.ReadAsStreamAsync().ConfigureAwait(false))
                 {
-                    await contentStream.CopyToAsync(stream);
+                    await contentStream.CopyToAsync(stream).ConfigureAwait(false);
                 }
             }
         }

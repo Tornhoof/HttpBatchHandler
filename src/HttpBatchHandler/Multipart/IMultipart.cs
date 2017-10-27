@@ -7,6 +7,6 @@ namespace HttpBatchHandler.Multipart
 {
     public interface IMultipart : IDisposable
     {
-        Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default(CancellationToken));
+        Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default);
     }
 }

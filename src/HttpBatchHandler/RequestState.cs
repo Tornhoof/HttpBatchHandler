@@ -74,8 +74,8 @@ namespace HttpBatchHandler
         internal async Task<ResponseFeature> ResponseTaskAsync()
         {
             _pipelineFinished = true;
-            await _responseFeature.FireOnSendingHeadersAsync();
-            await _responseFeature.FireOnResponseCompletedAsync();
+            await _responseFeature.FireOnSendingHeadersAsync().ConfigureAwait(false);
+            await _responseFeature.FireOnResponseCompletedAsync().ConfigureAwait(false);
             _responseStream.Complete();
             return _responseFeature;
         }

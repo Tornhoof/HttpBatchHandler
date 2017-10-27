@@ -31,6 +31,12 @@ namespace HttpBatchHandler.Tests
 
         public HttpClient HttpClient { get; } = new HttpClient();
 
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
         public virtual void Dispose(bool dispose)
         {
             if (dispose)
@@ -38,12 +44,6 @@ namespace HttpBatchHandler.Tests
                 _disposable?.Dispose();
                 HttpClient?.Dispose();
             }
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
         }
     }
 }

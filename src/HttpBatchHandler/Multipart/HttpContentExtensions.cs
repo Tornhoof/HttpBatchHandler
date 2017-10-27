@@ -11,7 +11,7 @@ namespace HttpBatchHandler.Multipart
     public static class HttpContentExtensions
     {
         public static async Task<MultipartReader> ReadAsMultipartAsync(this HttpContent content,
-            CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default)
         {
             if (!content.Headers.IsMultipart())
             {
@@ -22,7 +22,7 @@ namespace HttpBatchHandler.Multipart
             {
                 return null;
             }
-            var stream = await content.ReadAsStreamAsync();
+            var stream = await content.ReadAsStreamAsync().ConfigureAwait(false);
             var reader = new MultipartReader(boundary, stream);
             return reader;
         }
@@ -48,7 +48,8 @@ namespace HttpBatchHandler.Multipart
             {
                 throw new ArgumentNullException(nameof(headers));
             }
-            return headers.ContentType?.MediaType?.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase) ?? false;
+            return headers.ContentType?.MediaType?.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase) ??
+                   false;
         }
     }
 }

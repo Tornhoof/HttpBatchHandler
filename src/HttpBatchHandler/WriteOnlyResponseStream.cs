@@ -48,7 +48,7 @@ namespace HttpBatchHandler
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback,
             object state)
         {
-            var task = WriteAsync(buffer, offset, count, default(CancellationToken), state);
+            var task = WriteAsync(buffer, offset, count, default, state);
             if (callback != null)
             {
                 task.ContinueWith(callback.Invoke);
@@ -66,7 +66,7 @@ namespace HttpBatchHandler
             while (_data.Count > 0)
             {
                 var buffer = _data.Dequeue();
-                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken);
+                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken).ConfigureAwait(false);
                 ArrayPool<byte>.Shared.Return(buffer.Array);
             }
         }
@@ -110,7 +110,7 @@ namespace HttpBatchHandler
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            WriteAsync(buffer, offset, count, default(CancellationToken)).GetAwaiter().GetResult();
+            WriteAsync(buffer, offset, count, default).GetAwaiter().GetResult();
         }
 
         public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)

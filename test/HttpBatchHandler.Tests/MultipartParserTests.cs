@@ -12,6 +12,28 @@ namespace HttpBatchHandler.Tests
     // https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata/
     public class MultipartParserTests
     {
+        [Theory]
+        [InlineData(null, "MultipartRequest.txt")]
+        [InlineData("/path/base", "MultipartRequestPathBase.txt")]
+        public async Task Parse(string path, string file)
+        {
+            var reader = new MultipartReader("batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e",
+                GetType().Assembly.GetManifestResourceStream(typeof(MultipartParserTests), file));
+            var sections = new List<HttpApplicationRequestSection>();
+
+            HttpApplicationRequestSection section;
+            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(path).ConfigureAwait(false)) != null)
+            {
+                sections.Add(section);
+            }
+            Assert.Equal(4, sections.Count);
+            Assert.Collection(sections,
+                x => InspectFirstRequest(x, path),
+                x => InspectSecondRequest(x, path),
+                x => InspectThirdRequest(x, path),
+                x => InspectFourthRequest(x, path));
+        }
+
         private void InspectFirstRequest(HttpApplicationRequestSection obj, string pathBase)
         {
             Assert.Equal("GET", obj.RequestFeature.Method);
@@ -20,6 +42,16 @@ namespace HttpBatchHandler.Tests
             Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
             Assert.Equal("http", obj.RequestFeature.Scheme);
             Assert.Equal("?Query=Parts", obj.RequestFeature.QueryString);
+            Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
+        }
+
+        private void InspectFourthRequest(HttpApplicationRequestSection obj, string pathBase)
+        {
+            Assert.Equal("DELETE", obj.RequestFeature.Method);
+            Assert.Equal("/api/WebCustomers/2", obj.RequestFeature.Path);
+            Assert.Equal(pathBase, obj.RequestFeature.PathBase);
+            Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
+            Assert.Equal("http", obj.RequestFeature.Scheme);
             Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
         }
 
@@ -52,38 +84,6 @@ namespace HttpBatchHandler.Tests
                 serializer.Deserialize(new JsonTextReader(new StreamReader(obj.RequestFeature.Body)));
             Assert.Equal("1", deserialized.Id.ToString());
             Assert.Equal("Peter", deserialized.Name.ToString());
-        }
-
-        private void InspectFourthRequest(HttpApplicationRequestSection obj, string pathBase)
-        {
-            Assert.Equal("DELETE", obj.RequestFeature.Method);
-            Assert.Equal("/api/WebCustomers/2", obj.RequestFeature.Path);
-            Assert.Equal(pathBase, obj.RequestFeature.PathBase);
-            Assert.Equal("HTTP/1.1", obj.RequestFeature.Protocol);
-            Assert.Equal("http", obj.RequestFeature.Scheme);
-            Assert.Equal("localhost:12345", obj.RequestFeature.Headers[HeaderNames.Host]);
-        }
-
-        [Theory]
-        [InlineData(null, "MultipartRequest.txt")]
-        [InlineData("/path/base", "MultipartRequestPathBase.txt")]
-        public async Task Parse(string path, string file)
-        {
-            var reader = new MultipartReader("batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e",
-                GetType().Assembly.GetManifestResourceStream(typeof(MultipartParserTests), file));
-            var sections = new List<HttpApplicationRequestSection>();
-
-            HttpApplicationRequestSection section;
-            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(path)) != null)
-            {
-                sections.Add(section);
-            }
-            Assert.Equal(4, sections.Count);
-            Assert.Collection(sections,
-                x => InspectFirstRequest(x, path),
-                x => InspectSecondRequest(x, path),
-                x => InspectThirdRequest(x, path),
-                x => InspectFourthRequest(x, path));
         }
     }
 }

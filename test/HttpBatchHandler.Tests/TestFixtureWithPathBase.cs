@@ -4,7 +4,6 @@
     {
         public TestFixtureWithPathBase() : base("/path/base/")
         {
-            
         }
     }
 }

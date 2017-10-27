@@ -44,11 +44,11 @@ namespace HttpBatchHandler
             {
                 try
                 {
-                    await callback(state);
+                    await callback(state).ConfigureAwait(false);
                 }
                 finally
                 {
-                    await prior();
+                    await prior().ConfigureAwait(false);
                 }
             };
         }
@@ -63,8 +63,8 @@ namespace HttpBatchHandler
             var prior = _responseStartingAsync;
             _responseStartingAsync = async () =>
             {
-                await callback(state);
-                await prior();
+                await callback(state).ConfigureAwait(false);
+                await prior().ConfigureAwait(false);
             };
         }
 
@@ -75,7 +75,7 @@ namespace HttpBatchHandler
 
         public async Task FireOnSendingHeadersAsync()
         {
-            await _responseStartingAsync();
+            await _responseStartingAsync().ConfigureAwait(false);
             HasStarted = true;
         }
     }

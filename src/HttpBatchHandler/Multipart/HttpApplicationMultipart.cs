@@ -43,32 +43,32 @@ namespace HttpBatchHandler.Multipart
             GC.SuppressFinalize(this);
         }
 
-        public async Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default)
         {
             using (var sb = new StreamWriter(stream, Encoding.ASCII, 8192, true))
             {
-                await sb.WriteAsync("Content-Type: application/http; msgtype=response");
-                await sb.WriteAsync(Crlf);
-                await sb.WriteAsync(Crlf);
-                await sb.WriteAsync(_httpVersion);
-                await sb.WriteAsync(' ');
+                await sb.WriteAsync("Content-Type: application/http; msgtype=response").ConfigureAwait(false);
+                await sb.WriteAsync(Crlf).ConfigureAwait(false);
+                await sb.WriteAsync(Crlf).ConfigureAwait(false);
+                await sb.WriteAsync(_httpVersion).ConfigureAwait(false);
+                await sb.WriteAsync(' ').ConfigureAwait(false);
                 // ReSharper disable once ImpureMethodCallOnReadonlyValueField
-                await sb.WriteAsync(StatusCode.ToString());
-                await sb.WriteAsync(' ');
-                await sb.WriteAsync(_reasonPhrase);
-                await sb.WriteAsync(Crlf);
+                await sb.WriteAsync(StatusCode.ToString()).ConfigureAwait(false);
+                await sb.WriteAsync(' ').ConfigureAwait(false);
+                await sb.WriteAsync(_reasonPhrase).ConfigureAwait(false);
+                await sb.WriteAsync(Crlf).ConfigureAwait(false);
                 foreach (var header in Headers)
                 {
-                    await sb.WriteAsync(header.Key);
-                    await sb.WriteAsync(": ");
-                    await sb.WriteAsync(header.Value);
-                    await sb.WriteAsync(Crlf);
+                    await sb.WriteAsync(header.Key).ConfigureAwait(false);
+                    await sb.WriteAsync(": ").ConfigureAwait(false);
+                    await sb.WriteAsync(header.Value).ConfigureAwait(false);
+                    await sb.WriteAsync(Crlf).ConfigureAwait(false);
                 }
-                await sb.WriteAsync(Crlf);
+                await sb.WriteAsync(Crlf).ConfigureAwait(false);
             }
             if (_content != null)
             {
-                await _content.CopyToAsync(stream);
+                await _content.CopyToAsync(stream).ConfigureAwait(false);
             }
         }
 

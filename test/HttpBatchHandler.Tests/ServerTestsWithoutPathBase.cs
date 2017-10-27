@@ -4,7 +4,8 @@ namespace HttpBatchHandler.Tests
 {
     public class ServerTestsWithoutPathBase : BaseServerTests<TestFixtureWithoutPathBase>
     {
-        public ServerTestsWithoutPathBase(TestFixtureWithoutPathBase fixture, ITestOutputHelper outputHelper) : base(fixture, outputHelper)
+        public ServerTestsWithoutPathBase(TestFixtureWithoutPathBase fixture, ITestOutputHelper outputHelper) : base(
+            fixture, outputHelper)
         {
         }
     }

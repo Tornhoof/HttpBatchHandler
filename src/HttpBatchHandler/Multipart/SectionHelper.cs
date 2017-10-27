@@ -12,12 +12,12 @@ namespace HttpBatchHandler.Multipart
         public const int DefaultBufferSize = 1024 * 4;
 
         public static async Task<Dictionary<string, StringValues>> ReadHeadersAsync(BufferedReadStream stream,
-            CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default)
         {
             var totalSize = 0;
             var accumulator = new KeyValueAccumulator();
             var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit - totalSize,
-                cancellationToken);
+                cancellationToken).ConfigureAwait(false);
             while (!string.IsNullOrEmpty(line))
             {
                 if (MultipartReader.DefaultHeadersLengthLimit - totalSize < line.Length)
@@ -42,7 +42,7 @@ namespace HttpBatchHandler.Multipart
                 }
 
                 line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit - totalSize,
-                    cancellationToken);
+                    cancellationToken).ConfigureAwait(false);
             }
 
             return accumulator.GetResults();

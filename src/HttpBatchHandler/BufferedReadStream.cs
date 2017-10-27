@@ -139,7 +139,7 @@ namespace HttpBatchHandler
             }
             // Downshift to make room
             _bufferOffset = 0;
-            _bufferCount = await _inner.ReadAsync(_buffer, 0, _buffer.Length, cancellationToken);
+            _bufferCount = await _inner.ReadAsync(_buffer, 0, _buffer.Length, cancellationToken).ConfigureAwait(false);
             return _bufferCount > 0;
         }
 
@@ -162,7 +162,7 @@ namespace HttpBatchHandler
                     _bufferOffset = 0;
                 }
                 var read = await _inner.ReadAsync(_buffer, _bufferOffset + _bufferCount,
-                    _buffer.Length - _bufferCount - _bufferOffset, cancellationToken);
+                    _buffer.Length - _bufferCount - _bufferOffset, cancellationToken).ConfigureAwait(false);
                 _bufferCount += read;
                 if (read == 0)
                 {
@@ -214,7 +214,7 @@ namespace HttpBatchHandler
                 return toCopy;
             }
 
-            return await _inner.ReadAsync(buffer, offset, count, cancellationToken);
+            return await _inner.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
         }
 
         public string ReadLine(int lengthLimit)
@@ -244,7 +244,7 @@ namespace HttpBatchHandler
             {
                 bool foundCr = false, foundCrlf = false;
 
-                while (!foundCrlf && await EnsureBufferedAsync(cancellationToken))
+                while (!foundCrlf && await EnsureBufferedAsync(cancellationToken).ConfigureAwait(false))
                 {
                     if (builder.Length > lengthLimit)
                     {

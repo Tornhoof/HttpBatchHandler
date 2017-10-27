@@ -115,10 +115,10 @@ namespace HttpBatchHandler.Tests
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     context.Response.Headers.Add(HeaderNames.ContentType, "text/plain");
                     context.IsHandled = true;
-                    await context.Response.WriteAsync("Something went wrong.");
+                    await context.Response.WriteAsync("Something went wrong.").ConfigureAwait(false);
                 }
                 Assert.Equal(_state, context.State);
-                await base.BatchEnd(context);
+                await base.BatchEnd(context).ConfigureAwait(false);
             }
 
             public override Task BatchRequestExecuted(BatchRequestExecutedContext context)
@@ -246,9 +246,10 @@ namespace HttpBatchHandler.Tests
                     CreateFourthResponse()).ConfigureAwait(false);
                 Assert.Equal(StatusCodes.Status200OK, responseFeature.StatusCode);
                 var refText = await GetType().Assembly
-                    .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt").ReadAsStringAsync();
+                    .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt")
+                    .ReadAsStringAsync().ConfigureAwait(false);
                 responseFeature.Body.Position = 0;
-                var outputText = await responseFeature.Body.ReadAsStringAsync();
+                var outputText = await responseFeature.Body.ReadAsStringAsync().ConfigureAwait(false);
                 var boundary = Regex.Match(outputText, "--(.+?)--").Groups[1].Value;
                 refText = refText.Replace("61cfbe41-7ea6-4771-b1c5-b43564208ee5",
                     boundary); // replace with current boundary;

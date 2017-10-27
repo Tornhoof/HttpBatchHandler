@@ -69,7 +69,7 @@ namespace HttpBatchHandler
             {
                 Request = httpContext.Request
             };
-            await _options.Events.BatchStart(startContext);
+            await _options.Events.BatchStart(startContext).ConfigureAwait(false);
             Exception exception = null;
             var abort = false;
             var cancellationToken = httpContext.RequestAborted;
@@ -85,7 +85,8 @@ namespace HttpBatchHandler
                 try
                 {
                     HttpApplicationRequestSection section;
-                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(pathBase, cancellationToken)) !=
+                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(pathBase,
+                               cancellationToken).ConfigureAwait(false)) !=
                            null)
                     {
                         httpContext.RequestAborted.ThrowIfCancellationRequested();
@@ -95,7 +96,7 @@ namespace HttpBatchHandler
                             Features = CreateDefaultFeatures(httpContext.Features),
                             State = startContext.State
                         };
-                        await _options.Events.BatchRequestPreparation(preparationContext);
+                        await _options.Events.BatchRequestPreparation(preparationContext).ConfigureAwait(false);
                         using (var state =
                             new RequestState(section.RequestFeature, _factory, preparationContext.Features))
                         {
@@ -113,9 +114,9 @@ namespace HttpBatchHandler
                                         Request = state.Context.Request,
                                         State = startContext.State
                                     };
-                                    await _options.Events.BatchRequestExecuting(executingContext);
-                                    await _next.Invoke(state.Context);
-                                    var response = await state.ResponseTaskAsync();
+                                    await _options.Events.BatchRequestExecuting(executingContext).ConfigureAwait(false);
+                                    await _next.Invoke(state.Context).ConfigureAwait(false);
+                                    var response = await state.ResponseTaskAsync().ConfigureAwait(false);
                                     executedContext.Response = state.Context.Response;
                                     writer.Add(new HttpApplicationMultipart(response));
                                 }
@@ -126,7 +127,7 @@ namespace HttpBatchHandler
                                 }
                                 finally
                                 {
-                                    await _options.Events.BatchRequestExecuted(executedContext);
+                                    await _options.Events.BatchRequestExecuted(executedContext).ConfigureAwait(false);
                                     abort = executedContext.Abort;
                                 }
                                 if (abort)
@@ -154,11 +155,11 @@ namespace HttpBatchHandler
                     {
                         endContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     }
-                    await _options.Events.BatchEnd(endContext);
+                    await _options.Events.BatchEnd(endContext).ConfigureAwait(false);
                     if (!endContext.IsHandled)
                     {
                         httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);
-                        await writer.CopyToAsync(httpContext.Response.Body, cancellationToken);
+                        await writer.CopyToAsync(httpContext.Response.Body, cancellationToken).ConfigureAwait(false);
                     }
                 }
             }

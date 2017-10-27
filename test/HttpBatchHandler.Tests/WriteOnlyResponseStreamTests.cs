@@ -13,7 +13,7 @@ namespace HttpBatchHandler.Tests
         {
             using (var ms = new MemoryStream())
             {
-                await writeOnlyStream.CopyToAsync(ms);
+                await writeOnlyStream.CopyToAsync(ms).ConfigureAwait(false);
                 return ms.ToArray();
             }
         }
@@ -36,8 +36,8 @@ namespace HttpBatchHandler.Tests
                 var buffer = new byte[] {1, 2, 3, 4, 5};
                 var iar = writeOnlyStream.BeginWrite(buffer, 0, buffer.Length, null, null);
                 var task = Task.Factory.FromAsync(iar, writeOnlyStream.EndWrite);
-                await task;
-                var writtenBuffer = await GetBuffer(writeOnlyStream);
+                await task.ConfigureAwait(false);
+                var writtenBuffer = await GetBuffer(writeOnlyStream).ConfigureAwait(false);
                 Assert.Equal(buffer, writtenBuffer);
             }
             Assert.True(isAborted);
@@ -63,8 +63,8 @@ namespace HttpBatchHandler.Tests
             using (var writeOnlyStream = new WriteOnlyResponseStream(abortRequest))
             {
                 var buffer = new byte[] {1, 2, 3, 4, 5};
-                await writeOnlyStream.WriteAsync(buffer, 0, buffer.Length);
-                var writtenBuffer = await GetBuffer(writeOnlyStream);
+                await writeOnlyStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                var writtenBuffer = await GetBuffer(writeOnlyStream).ConfigureAwait(false);
                 Assert.Equal(buffer, writtenBuffer);
             }
             Assert.True(isAborted);
@@ -86,11 +86,11 @@ namespace HttpBatchHandler.Tests
                         {
                             var buffer = ArrayPool<byte>.Shared.Rent(random.Next(50000));
                             random.NextBytes(buffer);
-                            await writeOnlyStream.WriteAsync(buffer, 0, buffer.Length);
-                            await ms1.WriteAsync(buffer, 0, buffer.Length);
+                            await writeOnlyStream.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+                            await ms1.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
                             ArrayPool<byte>.Shared.Return(buffer);
                         }
-                        await writeOnlyStream.CopyToAsync(ms2);
+                        await writeOnlyStream.CopyToAsync(ms2).ConfigureAwait(false);
                         ms1.Position = 0;
                         ms2.Position = 0;
                         CompareStreams(ms1, ms2);
@@ -109,7 +109,7 @@ namespace HttpBatchHandler.Tests
             {
                 var buffer = new byte[] {1, 2, 3, 4, 5};
                 writeOnlyStream.Write(buffer, 0, buffer.Length);
-                var writtenBuffer = await GetBuffer(writeOnlyStream);
+                var writtenBuffer = await GetBuffer(writeOnlyStream).ConfigureAwait(false);
                 Assert.Equal(buffer, writtenBuffer);
             }
             Assert.True(isAborted);

@@ -11,21 +11,22 @@ namespace HttpBatchHandler.Multipart
 {
     public static class HttpApplicationResponseSectionExtensions
     {
-        private static readonly char[] SpaceArray = new []{' '};
+        private static readonly char[] SpaceArray = {' '};
+
         public static async Task<string> ReadAsStringAsync(this HttpApplicationResponseSection section,
-            CancellationToken cancellationToken = default(CancellationToken))
+            CancellationToken cancellationToken = default)
         {
             if (section.ResponseFeature?.Body == null)
             {
                 return null;
             }
-            return await section.ResponseFeature?.Body.ReadAsStringAsync(cancellationToken);
+            return await section.ResponseFeature?.Body.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public static async Task<HttpApplicationResponseSection> ReadNextHttpApplicationResponseSectionAsync(
-            this MultipartReader reader, CancellationToken cancellationToken = default(CancellationToken))
+            this MultipartReader reader, CancellationToken cancellationToken = default)
         {
-            var section = await reader.ReadNextSectionAsync(cancellationToken);
+            var section = await reader.ReadNextSectionAsync(cancellationToken).ConfigureAwait(false);
             if (section == null)
             {
                 return null; // if null we're done
@@ -46,12 +47,12 @@ namespace HttpBatchHandler.Multipart
                 throw new InvalidDataException("Invalid Content-Type.");
             }
             var bufferedStream = new BufferedReadStream(section.Body, SectionHelper.DefaultBufferSize);
-            var responseLine = await ReadResponseLineAsync(bufferedStream, cancellationToken);
+            var responseLine = await ReadResponseLineAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             if (responseLine.Length != 3)
             {
                 throw new InvalidDataException("Invalid request line.");
             }
-            var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken);
+            var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             return new HttpApplicationResponseSection
             {
                 ResponseFeature = new ResponseFeature
@@ -69,7 +70,7 @@ namespace HttpBatchHandler.Multipart
         private static async Task<string[]> ReadResponseLineAsync(BufferedReadStream stream,
             CancellationToken cancellationToken)
         {
-            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken);
+            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken).ConfigureAwait(false);
             return line.Split(SpaceArray, 3);
         }
     }

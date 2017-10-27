@@ -14,9 +14,9 @@ namespace HttpBatchHandler.Multipart
     public static class HttpApplicationRequestSectionExtensions
     {
         public static async Task<HttpApplicationRequestSection> ReadNextHttpApplicationRequestSectionAsync(
-            this MultipartReader reader, PathString pathBase = default(PathString), CancellationToken cancellationToken = default(CancellationToken))
+            this MultipartReader reader, PathString pathBase = default, CancellationToken cancellationToken = default)
         {
-            var section = await reader.ReadNextSectionAsync(cancellationToken);
+            var section = await reader.ReadNextSectionAsync(cancellationToken).ConfigureAwait(false);
             if (section == null)
             {
                 return null; // if null we're done
@@ -37,13 +37,13 @@ namespace HttpBatchHandler.Multipart
                 throw new InvalidDataException("Invalid Content-Type.");
             }
             var bufferedStream = new BufferedReadStream(section.Body, SectionHelper.DefaultBufferSize);
-            var requestLineParts = await ReadRequestLineAsync(bufferedStream, cancellationToken);
+            var requestLineParts = await ReadRequestLineAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             if (requestLineParts.Length != 3)
             {
                 throw new InvalidDataException("Invalid request line.");
             }
             // Validation of the request line parts necessary?
-            var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken);
+            var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             if (!headers.TryGetValue(HeaderNames.Host, out var hostHeader))
             {
                 throw new InvalidDataException("No Host Header");
@@ -95,7 +95,7 @@ namespace HttpBatchHandler.Multipart
         private static async Task<string[]> ReadRequestLineAsync(BufferedReadStream stream,
             CancellationToken cancellationToken)
         {
-            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken);
+            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken).ConfigureAwait(false);
             return line.Split(' ');
         }
     }

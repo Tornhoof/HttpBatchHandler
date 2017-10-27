@@ -29,7 +29,7 @@ namespace HttpBatchHandler.Tests
                         Content = new StringContent("{\"Id\":1,\"Name\":\"Peter\"}", Encoding.UTF8, "application/json")
                     }),
                 new HttpApplicationContent(new HttpRequestMessage(HttpMethod.Delete,
-                    "http://localhost:12345/api/WebCustomers/2")),
+                    "http://localhost:12345/api/WebCustomers/2"))
             };
             string output;
             using (var memoryStream = new MemoryStream())
@@ -44,7 +44,7 @@ namespace HttpBatchHandler.Tests
                 .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt"))
             {
                 Assert.NotNull(refTextStream);
-                input = await refTextStream.ReadAsStringAsync();
+                input = await refTextStream.ReadAsStringAsync().ConfigureAwait(false);
             }
             Assert.Equal(input, output);
         }
