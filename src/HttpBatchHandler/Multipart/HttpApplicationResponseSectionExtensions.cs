@@ -23,15 +23,15 @@ namespace HttpBatchHandler.Multipart
             }
 
             var contentTypeHeader = MediaTypeHeaderValue.Parse(section.ContentType);
-            if (!contentTypeHeader.MediaType.HasValue ||
-                !StringComparer.OrdinalIgnoreCase.Equals(contentTypeHeader.MediaType.Value, "application/http"))
+            if (!contentTypeHeader.MediaType.HasValue || !contentTypeHeader.MediaType.Equals("application/http", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidDataException("Invalid Content-Type.");
             }
+
             var param = contentTypeHeader.Parameters.SingleOrDefault(a =>
                 a.Name.HasValue && a.Value.HasValue &&
-                StringComparer.OrdinalIgnoreCase.Equals(a.Name.Value, "msgtype") &&
-                StringComparer.OrdinalIgnoreCase.Equals(a.Value.Value, "response"));
+                a.Name.Value.Equals("msgtype", StringComparison.OrdinalIgnoreCase) &&
+                a.Value.Equals("response", StringComparison.OrdinalIgnoreCase));
             if (param == null)
             {
                 throw new InvalidDataException("Invalid Content-Type.");
