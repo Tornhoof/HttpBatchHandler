@@ -36,8 +36,7 @@ namespace HttpBatchHandler.Tests
             }
             string input;
 
-            using (var refTextStream = GetType().Assembly
-                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt"))
+            using (var refTextStream = TestUtilities.GetNormalizedContentStream("MultipartResponse.txt"))
             {
                 Assert.NotNull(refTextStream);
                 input = await refTextStream.ReadAsStringAsync().ConfigureAwait(false);
@@ -50,7 +49,7 @@ namespace HttpBatchHandler.Tests
         public async Task ParseExample()
         {
             var reader = new MultipartReader("61cfbe41-7ea6-4771-b1c5-b43564208ee5",
-                GetType().Assembly.GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt"));
+                TestUtilities.GetNormalizedContentStream("MultipartResponse.txt"));
             var sections = new List<HttpApplicationResponseSection>();
 
             HttpApplicationResponseSection section;

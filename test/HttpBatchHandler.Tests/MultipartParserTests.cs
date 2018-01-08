@@ -18,7 +18,7 @@ namespace HttpBatchHandler.Tests
         public async Task Parse(string path, string file)
         {
             var reader = new MultipartReader("batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e",
-                GetType().Assembly.GetManifestResourceStream(typeof(MultipartParserTests), file));
+                TestUtilities.GetNormalizedContentStream(file));
             var sections = new List<HttpApplicationRequestSection>();
 
             HttpApplicationRequestSection section;

@@ -40,8 +40,7 @@ namespace HttpBatchHandler.Tests
             }
             string input;
 
-            using (var refTextStream = GetType().Assembly
-                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt"))
+            using (var refTextStream = TestUtilities.GetNormalizedContentStream("MultipartRequest.txt"))
             {
                 Assert.NotNull(refTextStream);
                 input = await refTextStream.ReadAsStringAsync().ConfigureAwait(false);
