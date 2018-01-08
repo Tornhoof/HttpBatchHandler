@@ -161,8 +161,7 @@ namespace HttpBatchHandler.Tests
             var requestFeature = new HttpRequestFeature {Path = "/api/batch"};
             requestFeature.Headers.Add(HeaderNames.ContentType,
                 "multipart/mixed; boundary=\"batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e\"");
-            requestFeature.Body = GetType().Assembly
-                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt");
+            requestFeature.Body = TestUtilities.GetNormalizedContentStream("MultipartRequest.txt");
             var responseFeature = new HttpResponseFeature();
             var mockedEvents = new ThrowExceptionEventHandler();
             using (responseFeature.Body = new MemoryStream())
@@ -187,8 +186,7 @@ namespace HttpBatchHandler.Tests
             var requestFeature = new HttpRequestFeature {Path = "/api/batch"};
             requestFeature.Headers.Add(HeaderNames.ContentType,
                 "multipart/mixed; boundary=\"batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e\"");
-            requestFeature.Body = GetType().Assembly
-                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt");
+            requestFeature.Body = TestUtilities.GetNormalizedContentStream("MultipartRequest.txt");
             var responseFeature = new HttpResponseFeature();
             var mockedEvents = new MockedBatchEventHandler();
             using (responseFeature.Body = new MemoryStream())
@@ -233,8 +231,7 @@ namespace HttpBatchHandler.Tests
             var requestFeature = new HttpRequestFeature {Path = "/api/batch"};
             requestFeature.Headers.Add(HeaderNames.ContentType,
                 "multipart/mixed; boundary=\"batch_357647d1-a6b5-4e6a-aa73-edfc88d8866e\"");
-            requestFeature.Body = GetType().Assembly
-                .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartRequest.txt");
+            requestFeature.Body = TestUtilities.GetNormalizedContentStream("MultipartRequest.txt");
             var responseFeature = new HttpResponseFeature();
             var mockedEvents = new MockedBatchEventHandler();
             using (responseFeature.Body = new MemoryStream())
@@ -245,8 +242,7 @@ namespace HttpBatchHandler.Tests
                     CreateThirdResponse(),
                     CreateFourthResponse()).ConfigureAwait(false);
                 Assert.Equal(StatusCodes.Status200OK, responseFeature.StatusCode);
-                var refText = await GetType().Assembly
-                    .GetManifestResourceStream(typeof(MultipartParserTests), "MultipartResponse.txt")
+                var refText = await TestUtilities.GetNormalizedContentStream("MultipartResponse.txt")
                     .ReadAsStringAsync().ConfigureAwait(false);
                 responseFeature.Body.Position = 0;
                 var outputText = await responseFeature.Body.ReadAsStringAsync().ConfigureAwait(false);
