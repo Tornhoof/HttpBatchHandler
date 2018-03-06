@@ -25,6 +25,7 @@ namespace HttpBatchHandler.Multipart
                     throw new InvalidDataException(
                         $"Multipart headers length limit {MultipartReader.DefaultHeadersLengthLimit} exceeded.");
                 }
+
                 totalSize += line.Length;
                 var splitIndex = line.IndexOf(':');
                 if (splitIndex <= 0)

@@ -2,11 +2,11 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.2.5</Version>
-    <AssemblyVersion>0.2.5.0</AssemblyVersion>
-    <FileVersion>0.2.5.0</FileVersion>
+    <Version>0.3</Version>
+    <AssemblyVersion>0.3.0.0</AssemblyVersion>
+    <FileVersion>0.3.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Copyright>HttpBatchHandler for ASP.NET Core 2.0 Contributors 2017</Copyright>
+    <Copyright>HttpBatchHandler for ASP.NET Core 2.0 Contributors 2018</Copyright>
     <PackageId>HttpBatchHandler</PackageId>
     <Authors>HttpBatchHandler for ASP.NET Core 2.0 Contributors</Authors>
     <Company />

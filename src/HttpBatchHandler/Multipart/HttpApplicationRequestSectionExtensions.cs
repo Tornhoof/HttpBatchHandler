@@ -13,6 +13,8 @@ namespace HttpBatchHandler.Multipart
 {
     public static class HttpApplicationRequestSectionExtensions
     {
+        private static readonly char[] SpaceArray = {' '};
+
         public static async Task<HttpApplicationRequestSection> ReadNextHttpApplicationRequestSectionAsync(
             this MultipartReader reader, PathString pathBase = default, CancellationToken cancellationToken = default)
         {
@@ -23,7 +25,8 @@ namespace HttpBatchHandler.Multipart
             }
 
             var contentTypeHeader = MediaTypeHeaderValue.Parse(section.ContentType);
-            if (!contentTypeHeader.MediaType.HasValue || !contentTypeHeader.MediaType.Equals("application/http", StringComparison.OrdinalIgnoreCase))
+            if (!contentTypeHeader.MediaType.HasValue ||
+                !contentTypeHeader.MediaType.Equals("application/http", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidDataException("Invalid Content-Type.");
             }
@@ -35,18 +38,21 @@ namespace HttpBatchHandler.Multipart
             {
                 throw new InvalidDataException("Invalid Content-Type.");
             }
+
             var bufferedStream = new BufferedReadStream(section.Body, SectionHelper.DefaultBufferSize);
             var requestLineParts = await ReadRequestLineAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             if (requestLineParts.Length != 3)
             {
                 throw new InvalidDataException("Invalid request line.");
             }
+
             // Validation of the request line parts necessary?
             var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             if (!headers.TryGetValue(HeaderNames.Host, out var hostHeader))
             {
                 throw new InvalidDataException("No Host Header");
             }
+
             var uri = BuildUri(hostHeader, requestLineParts[1]);
             var fullPath = PathString.FromUriComponent(uri);
             var feature = new HttpRequestFeature
@@ -68,6 +74,7 @@ namespace HttpBatchHandler.Multipart
                 feature.PathBase = string.Empty;
                 feature.Path = fullPath.Value;
             }
+
             return new HttpApplicationRequestSection
             {
                 RequestFeature = feature
@@ -80,11 +87,13 @@ namespace HttpBatchHandler.Multipart
             {
                 throw new InvalidOperationException("Invalid Host Header");
             }
+
             var hostString = new HostString(hostHeader.Single());
             if (!hostString.HasValue)
             {
                 return null;
             }
+
             var fullUri = $"http://{hostString.ToUriComponent()}{pathAndQuery}";
             var uri = new Uri(fullUri);
             return uri;
@@ -94,8 +103,9 @@ namespace HttpBatchHandler.Multipart
         private static async Task<string[]> ReadRequestLineAsync(BufferedReadStream stream,
             CancellationToken cancellationToken)
         {
-            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken).ConfigureAwait(false);
-            return line.Split(' ');
+            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken)
+                .ConfigureAwait(false);
+            return line.Split(SpaceArray);
         }
     }
 }

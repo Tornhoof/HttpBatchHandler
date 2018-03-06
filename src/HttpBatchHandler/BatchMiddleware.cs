@@ -32,6 +32,7 @@ namespace HttpBatchHandler
             {
                 return _next.Invoke(httpContext);
             }
+
             return InvokeBatchAsync(httpContext);
         }
 
@@ -65,14 +66,15 @@ namespace HttpBatchHandler
                 await httpContext.Response.WriteAsync("Invalid boundary in Content-Type.").ConfigureAwait(false);
                 return;
             }
+
             var startContext = new BatchStartContext
             {
                 Request = httpContext.Request
             };
-            await _options.Events.BatchStart(startContext).ConfigureAwait(false);
+            var cancellationToken = httpContext.RequestAborted;
+            await _options.Events.BatchStartAsync(startContext, cancellationToken).ConfigureAwait(false);
             Exception exception = null;
             var abort = false;
-            var cancellationToken = httpContext.RequestAborted;
             var reader = new MultipartReader(boundary, httpContext.Request.Body);
             // PathString.StartsWithSegments that we use requires the base path to not end in a slash.
             var pathBase = httpContext.Request.PathBase;
@@ -80,14 +82,15 @@ namespace HttpBatchHandler
             {
                 pathBase = new PathString(pathBase.Value.Substring(0, pathBase.Value.Length - 1));
             }
+
             using (var writer = new MultipartWriter("batch", Guid.NewGuid().ToString()))
             {
                 try
                 {
                     HttpApplicationRequestSection section;
-                    while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(pathBase,
-                               cancellationToken).ConfigureAwait(false)) !=
-                           null)
+                    while ((section = await reader
+                               .ReadNextHttpApplicationRequestSectionAsync(pathBase, cancellationToken)
+                               .ConfigureAwait(false)) != null)
                     {
                         httpContext.RequestAborted.ThrowIfCancellationRequested();
                         var preparationContext = new BatchRequestPreparationContext
@@ -96,7 +99,8 @@ namespace HttpBatchHandler
                             Features = CreateDefaultFeatures(httpContext.Features),
                             State = startContext.State
                         };
-                        await _options.Events.BatchRequestPreparation(preparationContext).ConfigureAwait(false);
+                        await _options.Events.BatchRequestPreparationAsync(preparationContext, cancellationToken)
+                            .ConfigureAwait(false);
                         using (var state =
                             new RequestState(section.RequestFeature, _factory, preparationContext.Features))
                         {
@@ -114,7 +118,9 @@ namespace HttpBatchHandler
                                         Request = state.Context.Request,
                                         State = startContext.State
                                     };
-                                    await _options.Events.BatchRequestExecuting(executingContext).ConfigureAwait(false);
+                                    await _options.Events
+                                        .BatchRequestExecutingAsync(executingContext, cancellationToken)
+                                        .ConfigureAwait(false);
                                     await _next.Invoke(state.Context).ConfigureAwait(false);
                                     var response = await state.ResponseTaskAsync().ConfigureAwait(false);
                                     executedContext.Response = state.Context.Response;
@@ -127,9 +133,11 @@ namespace HttpBatchHandler
                                 }
                                 finally
                                 {
-                                    await _options.Events.BatchRequestExecuted(executedContext).ConfigureAwait(false);
+                                    await _options.Events.BatchRequestExecutedAsync(executedContext, cancellationToken)
+                                        .ConfigureAwait(false);
                                     abort = executedContext.Abort;
                                 }
+
                                 if (abort)
                                 {
                                     break;
@@ -155,7 +163,8 @@ namespace HttpBatchHandler
                     {
                         endContext.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     }
-                    await _options.Events.BatchEnd(endContext).ConfigureAwait(false);
+
+                    await _options.Events.BatchEndAsync(endContext, cancellationToken).ConfigureAwait(false);
                     if (!endContext.IsHandled)
                     {
                         httpContext.Response.Headers.Add(HeaderNames.ContentType, writer.ContentType);

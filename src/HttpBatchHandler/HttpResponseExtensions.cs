@@ -4,7 +4,9 @@ namespace HttpBatchHandler
 {
     internal static class HttpResponseExtensions
     {
-        public static bool IsSuccessStatusCode(this HttpResponse response) =>
-            response.StatusCode >= 200 && response.StatusCode <= 299;
+        public static bool IsSuccessStatusCode(this HttpResponse response)
+        {
+            return response.StatusCode >= 200 && response.StatusCode <= 299;
+        }
     }
 }

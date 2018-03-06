@@ -27,6 +27,7 @@ namespace HttpBatchHandler.Tests
                         throw new InvalidOperationException("Can't find port.");
                     }
                 }
+
                 return freePort;
             }
         }

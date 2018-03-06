@@ -38,6 +38,7 @@ namespace HttpBatchHandler.Tests
                 memoryStream.Position = 0;
                 output = Encoding.ASCII.GetString(memoryStream.ToArray());
             }
+
             string input;
 
             using (var refTextStream = TestUtilities.GetNormalizedContentStream("MultipartRequest.txt"))
@@ -45,6 +46,7 @@ namespace HttpBatchHandler.Tests
                 Assert.NotNull(refTextStream);
                 input = await refTextStream.ReadAsStringAsync().ConfigureAwait(false);
             }
+
             Assert.Equal(input, output);
         }
     }

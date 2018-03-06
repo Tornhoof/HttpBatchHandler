@@ -34,6 +34,7 @@ namespace HttpBatchHandler.Tests
                 memoryStream.Position = 0;
                 output = Encoding.ASCII.GetString(memoryStream.ToArray());
             }
+
             string input;
 
             using (var refTextStream = TestUtilities.GetNormalizedContentStream("MultipartResponse.txt"))
@@ -41,6 +42,7 @@ namespace HttpBatchHandler.Tests
                 Assert.NotNull(refTextStream);
                 input = await refTextStream.ReadAsStringAsync().ConfigureAwait(false);
             }
+
             Assert.Equal(input, output);
         }
 
@@ -57,6 +59,7 @@ namespace HttpBatchHandler.Tests
             {
                 sections.Add(section);
             }
+
             Assert.Equal(4, sections.Count);
             Assert.Collection(sections, x => ElementInspector(x.ResponseFeature, CreateFirstResponse()),
                 x => ElementInspector(x.ResponseFeature, CreateSecondResponse()),

@@ -40,6 +40,7 @@ namespace HttpBatchHandler.Tests
                 var writtenBuffer = await GetBuffer(writeOnlyStream).ConfigureAwait(false);
                 Assert.Equal(buffer, writtenBuffer);
             }
+
             Assert.True(isAborted);
         }
 
@@ -52,6 +53,7 @@ namespace HttpBatchHandler.Tests
             {
                 writeOnlyStream.WriteByte(0);
             }
+
             Assert.True(isAborted);
         }
 
@@ -67,6 +69,7 @@ namespace HttpBatchHandler.Tests
                 var writtenBuffer = await GetBuffer(writeOnlyStream).ConfigureAwait(false);
                 Assert.Equal(buffer, writtenBuffer);
             }
+
             Assert.True(isAborted);
         }
 
@@ -90,6 +93,7 @@ namespace HttpBatchHandler.Tests
                             await ms1.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
                             ArrayPool<byte>.Shared.Return(buffer);
                         }
+
                         await writeOnlyStream.CopyToAsync(ms2).ConfigureAwait(false);
                         ms1.Position = 0;
                         ms2.Position = 0;
@@ -97,6 +101,7 @@ namespace HttpBatchHandler.Tests
                     }
                 }
             }
+
             Assert.True(isAborted);
         }
 
@@ -112,6 +117,7 @@ namespace HttpBatchHandler.Tests
                 var writtenBuffer = await GetBuffer(writeOnlyStream).ConfigureAwait(false);
                 Assert.Equal(buffer, writtenBuffer);
             }
+
             Assert.True(isAborted);
         }
     }

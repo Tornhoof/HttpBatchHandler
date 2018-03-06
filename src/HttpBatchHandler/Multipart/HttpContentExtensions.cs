@@ -17,11 +17,13 @@ namespace HttpBatchHandler.Multipart
             {
                 return null;
             }
+
             var boundary = content.Headers.GetMultipartBoundary();
             if (string.IsNullOrEmpty(boundary))
             {
                 return null;
             }
+
             var stream = await content.ReadAsStreamAsync().ConfigureAwait(false);
             var reader = new MultipartReader(boundary, stream);
             return reader;
@@ -33,12 +35,14 @@ namespace HttpBatchHandler.Multipart
             {
                 throw new ArgumentNullException(nameof(headers));
             }
+
             if (headers.IsMultipart())
             {
                 var boundaryParam = headers.ContentType.Parameters.FirstOrDefault(a =>
                     string.Equals(a.Name, "boundary", StringComparison.OrdinalIgnoreCase));
                 return boundaryParam?.Value.Trim('"');
             }
+
             return null;
         }
 
@@ -48,6 +52,7 @@ namespace HttpBatchHandler.Multipart
             {
                 throw new ArgumentNullException(nameof(headers));
             }
+
             return headers.ContentType?.MediaType?.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase) ??
                    false;
         }

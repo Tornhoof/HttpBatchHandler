@@ -22,10 +22,12 @@ namespace HttpBatchHandler.Tests
             var sections = new List<HttpApplicationRequestSection>();
 
             HttpApplicationRequestSection section;
-            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(path).ConfigureAwait(false)) != null)
+            while ((section = await reader.ReadNextHttpApplicationRequestSectionAsync(path).ConfigureAwait(false)) !=
+                   null)
             {
                 sections.Add(section);
             }
+
             Assert.Equal(4, sections.Count);
             Assert.Collection(sections,
                 x => InspectFirstRequest(x, path),

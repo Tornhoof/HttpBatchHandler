@@ -23,7 +23,8 @@ namespace HttpBatchHandler.Multipart
             }
 
             var contentTypeHeader = MediaTypeHeaderValue.Parse(section.ContentType);
-            if (!contentTypeHeader.MediaType.HasValue || !contentTypeHeader.MediaType.Equals("application/http", StringComparison.OrdinalIgnoreCase))
+            if (!contentTypeHeader.MediaType.HasValue ||
+                !contentTypeHeader.MediaType.Equals("application/http", StringComparison.OrdinalIgnoreCase))
             {
                 throw new InvalidDataException("Invalid Content-Type.");
             }
@@ -36,12 +37,14 @@ namespace HttpBatchHandler.Multipart
             {
                 throw new InvalidDataException("Invalid Content-Type.");
             }
+
             var bufferedStream = new BufferedReadStream(section.Body, SectionHelper.DefaultBufferSize);
             var responseLine = await ReadResponseLineAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             if (responseLine.Length != 3)
             {
                 throw new InvalidDataException("Invalid request line.");
             }
+
             var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             return new HttpApplicationResponseSection
             {
@@ -60,7 +63,8 @@ namespace HttpBatchHandler.Multipart
         private static async Task<string[]> ReadResponseLineAsync(BufferedReadStream stream,
             CancellationToken cancellationToken)
         {
-            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken).ConfigureAwait(false);
+            var line = await stream.ReadLineAsync(MultipartReader.DefaultHeadersLengthLimit, cancellationToken)
+                .ConfigureAwait(false);
             return line.Split(SpaceArray, 3);
         }
     }

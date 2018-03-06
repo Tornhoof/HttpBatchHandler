@@ -53,6 +53,7 @@ namespace HttpBatchHandler
             {
                 task.ContinueWith(callback.Invoke);
             }
+
             return task;
         }
 
@@ -66,7 +67,8 @@ namespace HttpBatchHandler
             while (_data.Count > 0)
             {
                 var buffer = _data.Dequeue();
-                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken).ConfigureAwait(false);
+                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken)
+                    .ConfigureAwait(false);
                 ArrayPool<byte>.Shared.Return(buffer.Array);
             }
         }
@@ -133,8 +135,10 @@ namespace HttpBatchHandler
                     var buffer = _data.Dequeue();
                     ArrayPool<byte>.Shared.Return(buffer.Array);
                 }
+
                 _abortRequest();
             }
+
             base.Dispose(disposing);
         }
 
