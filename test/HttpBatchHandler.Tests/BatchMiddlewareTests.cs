@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using HttpBatchHandler.Events;
 using Microsoft.AspNetCore.Http;
@@ -44,6 +45,7 @@ namespace HttpBatchHandler.Tests
                 var index = i;
                 functorArray[i] = ci => ReturnThis(ci.Arg<HttpContext>(), responseFeatures[index]);
             }
+
             requestDelegate.Invoke(null).ReturnsForAnyArgs(functorArray.First(), functorArray.Skip(1).ToArray());
             return requestDelegate;
         }
@@ -55,6 +57,7 @@ namespace HttpBatchHandler.Tests
             {
                 context.Response.Headers.Add(kval);
             }
+
             context.Response.StatusCode = responseFeature.StatusCode;
             context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase =
                 responseFeature.ReasonPhrase;
@@ -62,18 +65,12 @@ namespace HttpBatchHandler.Tests
         }
 
 
-        private BatchMiddleware CreateMiddleware(RequestDelegate next, BatchMiddlewareEvents eventHandler)
-        {
-            return new BatchMiddleware(next, new MockHttpContextFactory(),
-                new BatchMiddlewareOptions {Events = eventHandler});
-        }
+        private BatchMiddleware CreateMiddleware(RequestDelegate next, BatchMiddlewareEvents eventHandler) => new BatchMiddleware(next, new MockHttpContextFactory(),
+            new BatchMiddlewareOptions {Events = eventHandler});
 
         private class MockHttpContextFactory : IHttpContextFactory
         {
-            public HttpContext Create(IFeatureCollection featureCollection)
-            {
-                return new DefaultHttpContext(featureCollection);
-            }
+            public HttpContext Create(IFeatureCollection featureCollection) => new DefaultHttpContext(featureCollection);
 
             public void Dispose(HttpContext httpContext)
             {
@@ -83,13 +80,15 @@ namespace HttpBatchHandler.Tests
 
         private class ThrowExceptionEventHandler : MockedBatchEventHandler
         {
-            public override Task BatchRequestExecuted(BatchRequestExecutedContext context)
+            public override Task BatchRequestExecutedAsync(BatchRequestExecutedContext context,
+                CancellationToken cancellationToken = default)
             {
                 if (BatchRequestExecutedCount == 2)
                 {
                     throw new InvalidOperationException();
                 }
-                return base.BatchRequestExecuted(context);
+
+                return base.BatchRequestExecutedAsync(context, cancellationToken);
             }
         }
 
@@ -103,25 +102,29 @@ namespace HttpBatchHandler.Tests
             public int BatchRequestPreparationCount { get; private set; }
             public int BatchStartCount { get; private set; }
 
-            public override async Task BatchEnd(BatchEndContext context)
+            public override async Task BatchEndAsync(BatchEndContext context,
+                CancellationToken cancellationToken = default)
             {
                 BatchEndCount += 1;
                 if (context.IsAborted)
                 {
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                 }
+
                 if (context.Exception != null)
                 {
                     context.Response.StatusCode = StatusCodes.Status500InternalServerError;
                     context.Response.Headers.Add(HeaderNames.ContentType, "text/plain");
                     context.IsHandled = true;
-                    await context.Response.WriteAsync("Something went wrong.").ConfigureAwait(false);
+                    await context.Response.WriteAsync("Something went wrong.", cancellationToken).ConfigureAwait(false);
                 }
+
                 Assert.Equal(_state, context.State);
-                await base.BatchEnd(context).ConfigureAwait(false);
+                await base.BatchEndAsync(context, cancellationToken).ConfigureAwait(false);
             }
 
-            public override Task BatchRequestExecuted(BatchRequestExecutedContext context)
+            public override Task BatchRequestExecutedAsync(BatchRequestExecutedContext context,
+                CancellationToken cancellationToken = default)
             {
                 BatchRequestExecutedCount += 1;
                 if (!context.Response.IsSuccessStatusCode())
@@ -129,29 +132,33 @@ namespace HttpBatchHandler.Tests
                     context.Abort = true;
                     context.Exception = new InvalidOperationException();
                 }
+
                 Assert.Equal(_state, context.State);
-                return base.BatchRequestExecuted(context);
+                return base.BatchRequestExecutedAsync(context, cancellationToken);
             }
 
-            public override Task BatchRequestExecuting(BatchRequestExecutingContext context)
+            public override Task BatchRequestExecutingAsync(BatchRequestExecutingContext context,
+                CancellationToken cancellationToken = default)
             {
                 BatchRequestExecutingCount += 1;
                 Assert.Equal(_state, context.State);
-                return base.BatchRequestExecuting(context);
+                return base.BatchRequestExecutingAsync(context, cancellationToken);
             }
 
-            public override Task BatchRequestPreparation(BatchRequestPreparationContext context)
+            public override Task BatchRequestPreparationAsync(BatchRequestPreparationContext context,
+                CancellationToken cancellationToken = default)
             {
                 BatchRequestPreparationCount += 1;
                 Assert.Equal(_state, context.State);
-                return base.BatchRequestPreparation(context);
+                return base.BatchRequestPreparationAsync(context, cancellationToken);
             }
 
-            public override Task BatchStart(BatchStartContext context)
+            public override Task BatchStartAsync(BatchStartContext context,
+                CancellationToken cancellationToken = default)
             {
                 BatchStartCount += 1;
                 context.State = _state;
-                return base.BatchStart(context);
+                return base.BatchStartAsync(context, cancellationToken);
             }
         }
 

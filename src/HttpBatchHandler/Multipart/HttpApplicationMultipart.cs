@@ -30,6 +30,7 @@ namespace HttpBatchHandler.Multipart
             {
                 _reasonPhrase = ReasonPhrases.GetReasonPhrase(statusCode);
             }
+
             _content = content;
             Headers = headers;
         }
@@ -64,8 +65,10 @@ namespace HttpBatchHandler.Multipart
                     await sb.WriteAsync(header.Value).ConfigureAwait(false);
                     await sb.WriteAsync(Crlf).ConfigureAwait(false);
                 }
+
                 await sb.WriteAsync(Crlf).ConfigureAwait(false);
             }
+
             if (_content != null)
             {
                 await _content.CopyToAsync(stream).ConfigureAwait(false);

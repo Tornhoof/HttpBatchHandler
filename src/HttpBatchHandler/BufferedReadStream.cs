@@ -56,6 +56,7 @@ namespace HttpBatchHandler
                 {
                     throw new ArgumentOutOfRangeException(nameof(value), value, "Position must be positive.");
                 }
+
                 if (value == Position)
                 {
                     return;
@@ -96,6 +97,7 @@ namespace HttpBatchHandler
             {
                 return true;
             }
+
             // Downshift to make room
             _bufferOffset = 0;
             _bufferCount = _inner.Read(_buffer, 0, _buffer.Length);
@@ -109,6 +111,7 @@ namespace HttpBatchHandler
                 throw new ArgumentOutOfRangeException(nameof(minCount), minCount,
                     "The value must be smaller than the buffer size: " + _buffer.Length);
             }
+
             while (_bufferCount < minCount)
             {
                 // Downshift to make room
@@ -118,8 +121,10 @@ namespace HttpBatchHandler
                     {
                         Buffer.BlockCopy(_buffer, _bufferOffset, _buffer, 0, _bufferCount);
                     }
+
                     _bufferOffset = 0;
                 }
+
                 var read = _inner.Read(_buffer, _bufferOffset + _bufferCount,
                     _buffer.Length - _bufferCount - _bufferOffset);
                 _bufferCount += read;
@@ -128,6 +133,7 @@ namespace HttpBatchHandler
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -137,6 +143,7 @@ namespace HttpBatchHandler
             {
                 return true;
             }
+
             // Downshift to make room
             _bufferOffset = 0;
             _bufferCount = await _inner.ReadAsync(_buffer, 0, _buffer.Length, cancellationToken).ConfigureAwait(false);
@@ -150,6 +157,7 @@ namespace HttpBatchHandler
                 throw new ArgumentOutOfRangeException(nameof(minCount), minCount,
                     "The value must be smaller than the buffer size: " + _buffer.Length);
             }
+
             while (_bufferCount < minCount)
             {
                 // Downshift to make room
@@ -159,8 +167,10 @@ namespace HttpBatchHandler
                     {
                         Buffer.BlockCopy(_buffer, _bufferOffset, _buffer, 0, _bufferCount);
                     }
+
                     _bufferOffset = 0;
                 }
+
                 var read = await _inner.ReadAsync(_buffer, _bufferOffset + _bufferCount,
                     _buffer.Length - _bufferCount - _bufferOffset, cancellationToken).ConfigureAwait(false);
                 _bufferCount += read;
@@ -169,6 +179,7 @@ namespace HttpBatchHandler
                     return false;
                 }
             }
+
             return true;
         }
 
@@ -177,10 +188,7 @@ namespace HttpBatchHandler
             _inner.Flush();
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
-        {
-            return _inner.FlushAsync(cancellationToken);
-        }
+        public override Task FlushAsync(CancellationToken cancellationToken) => _inner.FlushAsync(cancellationToken);
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -230,6 +238,7 @@ namespace HttpBatchHandler
                     {
                         throw new InvalidDataException($"Line length limit {lengthLimit} exceeded.");
                     }
+
                     ProcessLineChar(builder, ref foundCr, ref foundCrlf);
                 }
 
@@ -272,6 +281,7 @@ namespace HttpBatchHandler
             {
                 Position = Length + offset;
             }
+
             return Position;
         }
 
@@ -285,10 +295,7 @@ namespace HttpBatchHandler
             _inner.Write(buffer, offset, count);
         }
 
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            return _inner.WriteAsync(buffer, offset, count, cancellationToken);
-        }
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => _inner.WriteAsync(buffer, offset, count, cancellationToken);
 
         protected override void Dispose(bool disposing)
         {

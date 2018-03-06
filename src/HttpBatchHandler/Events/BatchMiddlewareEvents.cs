@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HttpBatchHandler.Events
@@ -8,57 +9,59 @@ namespace HttpBatchHandler.Events
         /// <summary>
         ///     After all batch request are executed
         /// </summary>
-        public Func<BatchEndContext, Task> OnBatchEnd { get; set; } = context => Task.CompletedTask;
+        public Func<BatchEndContext, CancellationToken, Task> OnBatchEndAsync { get; set; } =
+            (context, token) => Task.CompletedTask;
 
         /// <summary>
         ///     Before an individual request is created
         /// </summary>
-        public Func<BatchRequestPreparationContext, Task> OnBatchPreparation { get; set; } =
-            context => Task.CompletedTask;
+        public Func<BatchRequestPreparationContext, CancellationToken, Task> OnBatchPreparationAsync { get; set; } =
+            (context, token) => Task.CompletedTask;
 
         /// <summary>
         ///     After an individual request in a batch is executed
         /// </summary>
-        public Func<BatchRequestExecutedContext, Task> OnBatchRequestExecuted { get; set; } =
-            context => Task.CompletedTask;
+        public Func<BatchRequestExecutedContext, CancellationToken, Task> OnBatchRequestExecutedAsync { get; set; } =
+            (context, token) => Task.CompletedTask;
 
         /// <summary>
         ///     Before an individual request in a batch is executed
         /// </summary>
-        public Func<BatchRequestExecutingContext, Task> OnBatchRequestExecuting { get; set; } =
-            context => Task.CompletedTask;
+        public Func<BatchRequestExecutingContext, CancellationToken, Task> OnBatchRequestExecutingAsync { get; set; } =
+            (context, token) => Task.CompletedTask;
 
         /// <summary>
         ///     Before any request in a batch are executed
         /// </summary>
-        public Func<BatchStartContext, Task> OnBatchStart { get; set; } = context => Task.CompletedTask;
+        public Func<BatchStartContext, CancellationToken, Task> OnBatchStartAsync { get; set; } =
+            (context, token) => Task.CompletedTask;
 
         /// <summary>
         ///     After all batch request are executed
         /// </summary>
-        public virtual Task BatchEnd(BatchEndContext context) => OnBatchEnd(context);
+        public virtual Task BatchEndAsync(BatchEndContext context, CancellationToken cancellationToken = default) => OnBatchEndAsync(context, cancellationToken);
 
         /// <summary>
         ///     After an individual request in a batch is executed
         /// </summary>
-        public virtual Task BatchRequestExecuted(BatchRequestExecutedContext context) =>
-            OnBatchRequestExecuted(context);
+        public virtual Task BatchRequestExecutedAsync(BatchRequestExecutedContext context,
+            CancellationToken cancellationToken = default) => OnBatchRequestExecutedAsync(context, cancellationToken);
 
         /// <summary>
         ///     Before an individual request in a batch is executed
         /// </summary>
-        public virtual Task BatchRequestExecuting(BatchRequestExecutingContext context) =>
-            OnBatchRequestExecuting(context);
+        public virtual Task BatchRequestExecutingAsync(BatchRequestExecutingContext context,
+            CancellationToken cancellationToken = default) => OnBatchRequestExecutingAsync(context, cancellationToken);
 
         /// <summary>
         ///     Before an individual request in a batch is executed
         /// </summary>
-        public virtual Task BatchRequestPreparation(BatchRequestPreparationContext context) =>
-            OnBatchPreparation(context);
+        public virtual Task BatchRequestPreparationAsync(BatchRequestPreparationContext context,
+            CancellationToken cancellationToken = default) => OnBatchPreparationAsync(context, cancellationToken);
 
         /// <summary>
         ///     Before any request in a batch are executed
         /// </summary>
-        public virtual Task BatchStart(BatchStartContext context) => OnBatchStart(context);
+        public virtual Task BatchStartAsync(BatchStartContext context, CancellationToken cancellationToken = default) => OnBatchStartAsync(context, cancellationToken);
     }
 }

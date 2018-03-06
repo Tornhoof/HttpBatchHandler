@@ -24,6 +24,7 @@ namespace HttpBatchHandler.Multipart
             {
                 _message.Dispose();
             }
+
             base.Dispose(disposing);
         }
 
@@ -47,6 +48,7 @@ namespace HttpBatchHandler.Multipart
                     await sb.WriteAsync(string.Join(", ", header.Value)).ConfigureAwait(false);
                     await sb.WriteAsync(Crlf).ConfigureAwait(false);
                 }
+
                 if (_message.Content?.Headers != null)
                 {
                     foreach (var header in _message.Content?.Headers)
@@ -57,8 +59,10 @@ namespace HttpBatchHandler.Multipart
                         await sb.WriteAsync(Crlf).ConfigureAwait(false);
                     }
                 }
+
                 await sb.WriteAsync(Crlf).ConfigureAwait(false);
             }
+
             if (_message.Content != null)
             {
                 using (var contentStream = await _message.Content.ReadAsStreamAsync().ConfigureAwait(false))

@@ -4,8 +4,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HttpBatchHandler.Website.Controllers
@@ -21,24 +19,15 @@ namespace HttpBatchHandler.Website.Controllers
 
         // GET api/values
         [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new[] {"value1", "value2"};
-        }
+        public IEnumerable<string> Get() => new[] {"value1", "value2"};
 
         // GET api/values/5
         [HttpGet("{id}", Name = "GetById")]
-        public string Get(int id)
-        {
-            return id.ToString();
-        }
+        public string Get(int id) => id.ToString();
 
         // GET api/values/query?id=5
         [HttpGet("query")]
-        public string GetFromQuery([FromQuery] int id)
-        {
-            return id.ToString();
-        }
+        public string GetFromQuery([FromQuery] int id) => id.ToString();
 
         // POST api/values
         [HttpPost]
@@ -67,11 +56,13 @@ namespace HttpBatchHandler.Website.Controllers
                     var hash = md5.ComputeHash(file.OpenReadStream());
                     b64Name = Convert.ToBase64String(hash);
                 }
+
                 if (b64Name == file.Name)
                 {
                     return Ok();
                 }
             }
+
             return BadRequest();
         }
 
@@ -83,11 +74,11 @@ namespace HttpBatchHandler.Website.Controllers
             var buffer = new byte[1 << 16];
             string b64Name;
             var ms = new MemoryStream();
-                    for (int i = 0; i < 10; i++)
-                    {
-                        random.NextBytes(buffer);
-                        await ms.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
-                    }
+            for (var i = 0; i < 10; i++)
+            {
+                random.NextBytes(buffer);
+                await ms.WriteAsync(buffer, 0, buffer.Length).ConfigureAwait(false);
+            }
 
             ms.Position = 0;
             using (var md5 = MD5.Create())
@@ -95,6 +86,7 @@ namespace HttpBatchHandler.Website.Controllers
                 md5.ComputeHash(ms);
                 b64Name = Convert.ToBase64String(md5.Hash);
             }
+
             ms.Position = 0;
             return File(ms, "application/octet-stream", b64Name);
         }

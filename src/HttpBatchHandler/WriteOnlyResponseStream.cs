@@ -40,10 +40,7 @@ namespace HttpBatchHandler
         }
 
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback,
-            object state)
-        {
-            throw new NotSupportedException();
-        }
+            object state) => throw new NotSupportedException();
 
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback,
             object state)
@@ -53,6 +50,7 @@ namespace HttpBatchHandler
             {
                 task.ContinueWith(callback.Invoke);
             }
+
             return task;
         }
 
@@ -66,15 +64,13 @@ namespace HttpBatchHandler
             while (_data.Count > 0)
             {
                 var buffer = _data.Dequeue();
-                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken).ConfigureAwait(false);
+                await destination.WriteAsync(buffer.Array, buffer.Offset, buffer.Count, cancellationToken)
+                    .ConfigureAwait(false);
                 ArrayPool<byte>.Shared.Return(buffer.Array);
             }
         }
 
-        public override int EndRead(IAsyncResult asyncResult)
-        {
-            throw new NotSupportedException();
-        }
+        public override int EndRead(IAsyncResult asyncResult) => throw new NotSupportedException();
 
         public override void EndWrite(IAsyncResult asyncResult)
         {
@@ -87,21 +83,12 @@ namespace HttpBatchHandler
             CheckAborted();
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            throw new NotSupportedException();
-        }
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
         public override Task<int>
-            ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            throw new NotSupportedException();
-        }
+            ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => throw new NotSupportedException();
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotSupportedException();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
         public override void SetLength(long value)
         {
@@ -133,8 +120,10 @@ namespace HttpBatchHandler
                     var buffer = _data.Dequeue();
                     ArrayPool<byte>.Shared.Return(buffer.Array);
                 }
+
                 _abortRequest();
             }
+
             base.Dispose(disposing);
         }
 

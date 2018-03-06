@@ -41,6 +41,7 @@ namespace HttpBatchHandler.Tests
                 random.NextBytes(buffer);
                 ms.Write(buffer, 0, buffer.Length);
             }
+
             string b64Name;
             ms.Position = 0;
             using (var md5 = MD5.Create())
@@ -48,6 +49,7 @@ namespace HttpBatchHandler.Tests
                 var hash = md5.ComputeHash(ms);
                 b64Name = Convert.ToBase64String(hash);
             }
+
             ms.Position = 0;
             var streamContent = new StreamContent(ms);
             return new MultipartFormDataContent {{streamContent, b64Name, b64Name}};
@@ -66,6 +68,7 @@ namespace HttpBatchHandler.Tests
                     var content = new HttpApplicationContent(httpRequestMessage);
                     multipartContent.Add(content);
                 }
+
                 using (var requestMessage = new HttpRequestMessage(HttpMethod.Post, batchUri)
                 {
                     Content = requestContent
@@ -90,7 +93,8 @@ namespace HttpBatchHandler.Tests
         {
             var result = new List<TBatchResult>();
             HttpApplicationResponseSection section;
-            while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync(cancellationToken).ConfigureAwait(false)) !=
+            while ((section = await reader.ReadNextHttpApplicationResponseSectionAsync(cancellationToken)
+                       .ConfigureAwait(false)) !=
                    null)
             {
                 var batchResult = new TBatchResult
@@ -101,6 +105,7 @@ namespace HttpBatchHandler.Tests
                 await batchResult.FillAsync(section.ResponseFeature.Body).ConfigureAwait(false);
                 result.Add(batchResult);
             }
+
             return result.ToArray();
         }
 
@@ -137,6 +142,7 @@ namespace HttpBatchHandler.Tests
                 {
                     await data.CopyToAsync(ResponsePayload).ConfigureAwait(false);
                 }
+
                 ResponsePayload.Position = 0;
             }
         }
@@ -175,6 +181,7 @@ namespace HttpBatchHandler.Tests
                     Assert.Single(contentDispo);
                     Assert.Contains(b64, contentDispo.First());
                 }
+
                 streamBatchResult.ResponsePayload.Dispose();
             }
         }
@@ -223,6 +230,7 @@ namespace HttpBatchHandler.Tests
                     var message = new HttpRequestMessage(HttpMethod.Get, new Uri(_fixture.BaseUri, "api/values"));
                     messages.Add(message);
                 }
+
                 var result = await SendBatchRequestAsync<StringBatchResult>(messages).ConfigureAwait(false);
                 Assert.Equal(HttpStatusCode.OK, result.StatusCode);
                 Assert.Equal(1000, result.ResponsePayload.Length);
@@ -256,6 +264,7 @@ namespace HttpBatchHandler.Tests
             {
                 Assert.True(batchResult.IsSuccessStatusCode);
             }
+
             var createdResult = result.ResponsePayload[3];
             Assert.Equal(201, createdResult.StatusCode);
             var locationHeader = createdResult.Headers["Location"];

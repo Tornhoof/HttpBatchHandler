@@ -40,10 +40,12 @@ namespace HttpBatchHandler.Multipart
             {
                 using (var part = _parts.Dequeue())
                 {
-                    await stream.WriteAsync(_startBoundary, 0, _startBoundary.Length, cancellationToken).ConfigureAwait(false);
+                    await stream.WriteAsync(_startBoundary, 0, _startBoundary.Length, cancellationToken)
+                        .ConfigureAwait(false);
                     await part.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
                 }
             }
+
             await stream.WriteAsync(_endBoundary, 0, _endBoundary.Length, cancellationToken).ConfigureAwait(false);
         }
 

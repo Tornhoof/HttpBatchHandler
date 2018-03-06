@@ -24,10 +24,12 @@ namespace HttpBatchHandler.Website
             {
                 app.UsePathBase(_pathBase);
             }
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
             }
+
             app.UseBatchMiddleware();
             app.UseMvc();
         }
