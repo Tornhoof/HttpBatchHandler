@@ -19,24 +19,15 @@ namespace HttpBatchHandler.Website.Controllers
 
         // GET api/values
         [HttpGet]
-        public IEnumerable<string> Get()
-        {
-            return new[] {"value1", "value2"};
-        }
+        public IEnumerable<string> Get() => new[] {"value1", "value2"};
 
         // GET api/values/5
         [HttpGet("{id}", Name = "GetById")]
-        public string Get(int id)
-        {
-            return id.ToString();
-        }
+        public string Get(int id) => id.ToString();
 
         // GET api/values/query?id=5
         [HttpGet("query")]
-        public string GetFromQuery([FromQuery] int id)
-        {
-            return id.ToString();
-        }
+        public string GetFromQuery([FromQuery] int id) => id.ToString();
 
         // POST api/values
         [HttpPost]

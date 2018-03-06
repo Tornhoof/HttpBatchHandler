@@ -65,18 +65,12 @@ namespace HttpBatchHandler.Tests
         }
 
 
-        private BatchMiddleware CreateMiddleware(RequestDelegate next, BatchMiddlewareEvents eventHandler)
-        {
-            return new BatchMiddleware(next, new MockHttpContextFactory(),
-                new BatchMiddlewareOptions {Events = eventHandler});
-        }
+        private BatchMiddleware CreateMiddleware(RequestDelegate next, BatchMiddlewareEvents eventHandler) => new BatchMiddleware(next, new MockHttpContextFactory(),
+            new BatchMiddlewareOptions {Events = eventHandler});
 
         private class MockHttpContextFactory : IHttpContextFactory
         {
-            public HttpContext Create(IFeatureCollection featureCollection)
-            {
-                return new DefaultHttpContext(featureCollection);
-            }
+            public HttpContext Create(IFeatureCollection featureCollection) => new DefaultHttpContext(featureCollection);
 
             public void Dispose(HttpContext httpContext)
             {

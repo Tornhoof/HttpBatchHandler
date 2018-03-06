@@ -8,10 +8,7 @@ namespace HttpBatchHandler
 {
     public static class BatchMiddlewareExtensions
     {
-        public static IApplicationBuilder UseBatchMiddleware(this IApplicationBuilder builder)
-        {
-            return builder.UseBatchMiddleware(null);
-        }
+        public static IApplicationBuilder UseBatchMiddleware(this IApplicationBuilder builder) => builder.UseBatchMiddleware(null);
 
         public static IApplicationBuilder UseBatchMiddleware(this IApplicationBuilder builder,
             Action<BatchMiddlewareOptions> configurationAction)

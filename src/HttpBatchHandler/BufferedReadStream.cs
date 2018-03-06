@@ -188,10 +188,7 @@ namespace HttpBatchHandler
             _inner.Flush();
         }
 
-        public override Task FlushAsync(CancellationToken cancellationToken)
-        {
-            return _inner.FlushAsync(cancellationToken);
-        }
+        public override Task FlushAsync(CancellationToken cancellationToken) => _inner.FlushAsync(cancellationToken);
 
         public override int Read(byte[] buffer, int offset, int count)
         {
@@ -298,10 +295,7 @@ namespace HttpBatchHandler
             _inner.Write(buffer, offset, count);
         }
 
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            return _inner.WriteAsync(buffer, offset, count, cancellationToken);
-        }
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => _inner.WriteAsync(buffer, offset, count, cancellationToken);
 
         protected override void Dispose(bool disposing)
         {

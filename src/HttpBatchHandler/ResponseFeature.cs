@@ -68,10 +68,7 @@ namespace HttpBatchHandler
             };
         }
 
-        public Task FireOnResponseCompletedAsync()
-        {
-            return _responseCompletedAsync();
-        }
+        public Task FireOnResponseCompletedAsync() => _responseCompletedAsync();
 
         public async Task FireOnSendingHeadersAsync()
         {

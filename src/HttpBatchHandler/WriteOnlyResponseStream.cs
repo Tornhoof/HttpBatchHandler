@@ -40,10 +40,7 @@ namespace HttpBatchHandler
         }
 
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback,
-            object state)
-        {
-            throw new NotSupportedException();
-        }
+            object state) => throw new NotSupportedException();
 
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback,
             object state)
@@ -73,10 +70,7 @@ namespace HttpBatchHandler
             }
         }
 
-        public override int EndRead(IAsyncResult asyncResult)
-        {
-            throw new NotSupportedException();
-        }
+        public override int EndRead(IAsyncResult asyncResult) => throw new NotSupportedException();
 
         public override void EndWrite(IAsyncResult asyncResult)
         {
@@ -89,21 +83,12 @@ namespace HttpBatchHandler
             CheckAborted();
         }
 
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            throw new NotSupportedException();
-        }
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
         public override Task<int>
-            ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            throw new NotSupportedException();
-        }
+            ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => throw new NotSupportedException();
 
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            throw new NotSupportedException();
-        }
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 
         public override void SetLength(long value)
         {
