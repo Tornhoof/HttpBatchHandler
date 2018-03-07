@@ -2,14 +2,15 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.3</Version>
-    <AssemblyVersion>0.3.0.0</AssemblyVersion>
-    <FileVersion>0.3.0.0</FileVersion>
+    <Version>0.3.1</Version>
+    <AssemblyVersion>0.3.1.0</AssemblyVersion>
+    <FileVersion>0.3.1.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>HttpBatchHandler for ASP.NET Core 2.0 Contributors 2018</Copyright>
     <PackageId>HttpBatchHandler</PackageId>
     <Authors>HttpBatchHandler for ASP.NET Core 2.0 Contributors</Authors>
     <Company />
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Product>HttpBatchHandler for ASP.NET Core 2.0</Product>
     <Description>HttpBatchHandler for ASP.NET Core 2.0</Description>
     <PackageLicenseUrl>https://github.com/Tornhoof/HttpBatchHandler/blob/master/LICENSE</PackageLicenseUrl>
@@ -23,6 +24,8 @@ https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <LangVersion>latest</LangVersion>
+    <DocumentationFile>bin\Release\netstandard2.0\HttpBatchHandler.xml</DocumentationFile>
+    <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -37,5 +40,4 @@ https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-
     <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.0.0" />
   </ItemGroup>
-
 </Project>
