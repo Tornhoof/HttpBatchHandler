@@ -47,9 +47,6 @@ namespace HttpBatchHandler
             return output;
         }
 
-        /// <summary>
-        ///     Is the Async Offload stuff and the rather complicated state and stream handling really necessary?
-        /// </summary>
         private async Task InvokeBatchAsync(HttpContext httpContext)
         {
             if (!httpContext.Request.IsMultiPartBatchRequest())
