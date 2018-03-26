@@ -9,12 +9,12 @@ namespace HttpBatchHandler
 {
     /// <summary>
     ///     This is copied directly from
-    ///     https://github.com/aspnet/HttpAbstractions/blob/master/src/Microsoft.AspNetCore.WebUtilities/BufferedReadStream.cs
+    ///     https://raw.githubusercontent.com/aspnet/HttpAbstractions/dev/src/Microsoft.AspNetCore.WebUtilities/BufferedReadStream.cs
     /// </summary>
     internal class BufferedReadStream : Stream
     {
-        private const byte Cr = (byte) '\r';
-        private const byte Lf = (byte) '\n';
+        private const byte CR = (byte) '\r';
+        private const byte LF = (byte) '\n';
         private readonly byte[] _buffer;
         private readonly ArrayPool<byte> _bytePool;
 
@@ -30,7 +30,12 @@ namespace HttpBatchHandler
 
         public BufferedReadStream(Stream inner, int bufferSize, ArrayPool<byte> bytePool)
         {
-            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
+            if (inner == null)
+            {
+                throw new ArgumentNullException(nameof(inner));
+            }
+
+            _inner = inner;
             _bytePool = bytePool;
             _buffer = bytePool.Rent(bufferSize);
         }
@@ -91,6 +96,79 @@ namespace HttpBatchHandler
             }
         }
 
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            if (origin == SeekOrigin.Begin)
+            {
+                Position = offset;
+            }
+            else if (origin == SeekOrigin.Current)
+            {
+                Position = Position + offset;
+            }
+            else // if (origin == SeekOrigin.End)
+            {
+                Position = Length + offset;
+            }
+
+            return Position;
+        }
+
+        public override void SetLength(long value)
+        {
+            _inner.SetLength(value);
+        }
+
+        public override void Flush()
+        {
+            _inner.Flush();
+        }
+
+        public override Task FlushAsync(CancellationToken cancellationToken) => _inner.FlushAsync(cancellationToken);
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            _inner.Write(buffer, offset, count);
+        }
+
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
+            _inner.WriteAsync(buffer, offset, count, cancellationToken);
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            ValidateBuffer(buffer, offset, count);
+
+            // Drain buffer
+            if (_bufferCount > 0)
+            {
+                var toCopy = Math.Min(_bufferCount, count);
+                Buffer.BlockCopy(_buffer, _bufferOffset, buffer, offset, toCopy);
+                _bufferOffset += toCopy;
+                _bufferCount -= toCopy;
+                return toCopy;
+            }
+
+            return _inner.Read(buffer, offset, count);
+        }
+
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count,
+            CancellationToken cancellationToken)
+        {
+            ValidateBuffer(buffer, offset, count);
+
+            // Drain buffer
+            if (_bufferCount > 0)
+            {
+                var toCopy = Math.Min(_bufferCount, count);
+                Buffer.BlockCopy(_buffer, _bufferOffset, buffer, offset, toCopy);
+                _bufferOffset += toCopy;
+                _bufferCount -= toCopy;
+                return toCopy;
+            }
+
+            return await _inner.ReadAsync(buffer, offset, count, cancellationToken);
+        }
+
         public bool EnsureBuffered()
         {
             if (_bufferCount > 0)
@@ -101,6 +179,19 @@ namespace HttpBatchHandler
             // Downshift to make room
             _bufferOffset = 0;
             _bufferCount = _inner.Read(_buffer, 0, _buffer.Length);
+            return _bufferCount > 0;
+        }
+
+        public async Task<bool> EnsureBufferedAsync(CancellationToken cancellationToken)
+        {
+            if (_bufferCount > 0)
+            {
+                return true;
+            }
+
+            // Downshift to make room
+            _bufferOffset = 0;
+            _bufferCount = await _inner.ReadAsync(_buffer, 0, _buffer.Length, cancellationToken);
             return _bufferCount > 0;
         }
 
@@ -137,19 +228,6 @@ namespace HttpBatchHandler
             return true;
         }
 
-        public async Task<bool> EnsureBufferedAsync(CancellationToken cancellationToken)
-        {
-            if (_bufferCount > 0)
-            {
-                return true;
-            }
-
-            // Downshift to make room
-            _bufferOffset = 0;
-            _bufferCount = await _inner.ReadAsync(_buffer, 0, _buffer.Length, cancellationToken).ConfigureAwait(false);
-            return _bufferCount > 0;
-        }
-
         public async Task<bool> EnsureBufferedAsync(int minCount, CancellationToken cancellationToken)
         {
             if (minCount > _buffer.Length)
@@ -172,7 +250,7 @@ namespace HttpBatchHandler
                 }
 
                 var read = await _inner.ReadAsync(_buffer, _bufferOffset + _bufferCount,
-                    _buffer.Length - _bufferCount - _bufferOffset, cancellationToken).ConfigureAwait(false);
+                    _buffer.Length - _bufferCount - _bufferOffset, cancellationToken);
                 _bufferCount += read;
                 if (read == 0)
                 {
@@ -183,66 +261,24 @@ namespace HttpBatchHandler
             return true;
         }
 
-        public override void Flush()
-        {
-            _inner.Flush();
-        }
-
-        public override Task FlushAsync(CancellationToken cancellationToken) => _inner.FlushAsync(cancellationToken);
-
-        public override int Read(byte[] buffer, int offset, int count)
-        {
-            ValidateBuffer(buffer, offset, count);
-
-            // Drain buffer
-            if (_bufferCount > 0)
-            {
-                var toCopy = Math.Min(_bufferCount, count);
-                Buffer.BlockCopy(_buffer, _bufferOffset, buffer, offset, toCopy);
-                _bufferOffset += toCopy;
-                _bufferCount -= toCopy;
-                return toCopy;
-            }
-
-            return _inner.Read(buffer, offset, count);
-        }
-
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count,
-            CancellationToken cancellationToken)
-        {
-            ValidateBuffer(buffer, offset, count);
-
-            // Drain buffer
-            if (_bufferCount > 0)
-            {
-                var toCopy = Math.Min(_bufferCount, count);
-                Buffer.BlockCopy(_buffer, _bufferOffset, buffer, offset, toCopy);
-                _bufferOffset += toCopy;
-                _bufferCount -= toCopy;
-                return toCopy;
-            }
-
-            return await _inner.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
-        }
-
         public string ReadLine(int lengthLimit)
         {
             CheckDisposed();
             using (var builder = new MemoryStream(200))
             {
-                bool foundCr = false, foundCrlf = false;
+                bool foundCR = false, foundCRLF = false;
 
-                while (!foundCrlf && EnsureBuffered())
+                while (!foundCRLF && EnsureBuffered())
                 {
                     if (builder.Length > lengthLimit)
                     {
                         throw new InvalidDataException($"Line length limit {lengthLimit} exceeded.");
                     }
 
-                    ProcessLineChar(builder, ref foundCr, ref foundCrlf);
+                    ProcessLineChar(builder, ref foundCR, ref foundCRLF);
                 }
 
-                return DecodeLine(builder, foundCrlf);
+                return DecodeLine(builder, foundCRLF);
             }
         }
 
@@ -251,51 +287,21 @@ namespace HttpBatchHandler
             CheckDisposed();
             using (var builder = new MemoryStream(200))
             {
-                bool foundCr = false, foundCrlf = false;
+                bool foundCR = false, foundCRLF = false;
 
-                while (!foundCrlf && await EnsureBufferedAsync(cancellationToken).ConfigureAwait(false))
+                while (!foundCRLF && await EnsureBufferedAsync(cancellationToken))
                 {
                     if (builder.Length > lengthLimit)
                     {
                         throw new InvalidDataException($"Line length limit {lengthLimit} exceeded.");
                     }
 
-                    ProcessLineChar(builder, ref foundCr, ref foundCrlf);
+                    ProcessLineChar(builder, ref foundCR, ref foundCRLF);
                 }
 
-                return DecodeLine(builder, foundCrlf);
+                return DecodeLine(builder, foundCRLF);
             }
         }
-
-        public override long Seek(long offset, SeekOrigin origin)
-        {
-            if (origin == SeekOrigin.Begin)
-            {
-                Position = offset;
-            }
-            else if (origin == SeekOrigin.Current)
-            {
-                Position = Position + offset;
-            }
-            else // if (origin == SeekOrigin.End)
-            {
-                Position = Length + offset;
-            }
-
-            return Position;
-        }
-
-        public override void SetLength(long value)
-        {
-            _inner.SetLength(value);
-        }
-
-        public override void Write(byte[] buffer, int offset, int count)
-        {
-            _inner.Write(buffer, offset, count);
-        }
-
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) => _inner.WriteAsync(buffer, offset, count, cancellationToken);
 
         protected override void Dispose(bool disposing)
         {
@@ -311,41 +317,33 @@ namespace HttpBatchHandler
             }
         }
 
-        private void CheckDisposed()
-        {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException(nameof(BufferedReadStream));
-            }
-        }
-
-        private string DecodeLine(MemoryStream builder, bool foundCrlf)
-        {
-            // Drop the final CRLF, if any
-            var length = foundCrlf ? builder.Length - 2 : builder.Length;
-            return Encoding.UTF8.GetString(builder.ToArray(), 0, (int) length);
-        }
-
-        private void ProcessLineChar(MemoryStream builder, ref bool foundCr, ref bool foundCrlf)
+        private void ProcessLineChar(MemoryStream builder, ref bool foundCR, ref bool foundCRLF)
         {
             var b = _buffer[_bufferOffset];
             builder.WriteByte(b);
             _bufferOffset++;
             _bufferCount--;
-            if (b == Cr)
+            if (b == LF && foundCR)
             {
-                foundCr = true;
+                foundCRLF = true;
+                return;
             }
-            else if (b == Lf)
+
+            foundCR = b == CR;
+        }
+
+        private string DecodeLine(MemoryStream builder, bool foundCRLF)
+        {
+            // Drop the final CRLF, if any
+            var length = foundCRLF ? builder.Length - 2 : builder.Length;
+            return Encoding.UTF8.GetString(builder.ToArray(), 0, (int) length);
+        }
+
+        private void CheckDisposed()
+        {
+            if (_disposed)
             {
-                if (foundCr)
-                {
-                    foundCrlf = true;
-                }
-                else
-                {
-                    foundCr = false;
-                }
+                throw new ObjectDisposedException(nameof(BufferedReadStream));
             }
         }
 
