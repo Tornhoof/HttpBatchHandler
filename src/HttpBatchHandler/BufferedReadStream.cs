@@ -13,8 +13,8 @@ namespace HttpBatchHandler
     /// </summary>
     internal class BufferedReadStream : Stream
     {
-        private const byte CR = (byte) '\r';
-        private const byte LF = (byte) '\n';
+        private const byte Cr = (byte) '\r';
+        private const byte Lf = (byte) '\n';
         private readonly byte[] _buffer;
         private readonly ArrayPool<byte> _bytePool;
 
@@ -30,12 +30,7 @@ namespace HttpBatchHandler
 
         public BufferedReadStream(Stream inner, int bufferSize, ArrayPool<byte> bytePool)
         {
-            if (inner == null)
-            {
-                throw new ArgumentNullException(nameof(inner));
-            }
-
-            _inner = inner;
+            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
             _bytePool = bytePool;
             _buffer = bytePool.Rent(bufferSize);
         }
@@ -166,7 +161,7 @@ namespace HttpBatchHandler
                 return toCopy;
             }
 
-            return await _inner.ReadAsync(buffer, offset, count, cancellationToken);
+            return await _inner.ReadAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
         }
 
         public bool EnsureBuffered()
@@ -191,7 +186,7 @@ namespace HttpBatchHandler
 
             // Downshift to make room
             _bufferOffset = 0;
-            _bufferCount = await _inner.ReadAsync(_buffer, 0, _buffer.Length, cancellationToken);
+            _bufferCount = await _inner.ReadAsync(_buffer, 0, _buffer.Length, cancellationToken).ConfigureAwait(false);
             return _bufferCount > 0;
         }
 
@@ -250,7 +245,7 @@ namespace HttpBatchHandler
                 }
 
                 var read = await _inner.ReadAsync(_buffer, _bufferOffset + _bufferCount,
-                    _buffer.Length - _bufferCount - _bufferOffset, cancellationToken);
+                    _buffer.Length - _bufferCount - _bufferOffset, cancellationToken).ConfigureAwait(false);
                 _bufferCount += read;
                 if (read == 0)
                 {
@@ -289,7 +284,7 @@ namespace HttpBatchHandler
             {
                 bool foundCR = false, foundCRLF = false;
 
-                while (!foundCRLF && await EnsureBufferedAsync(cancellationToken))
+                while (!foundCRLF && await EnsureBufferedAsync(cancellationToken).ConfigureAwait(false))
                 {
                     if (builder.Length > lengthLimit)
                     {
@@ -323,13 +318,13 @@ namespace HttpBatchHandler
             builder.WriteByte(b);
             _bufferOffset++;
             _bufferCount--;
-            if (b == LF && foundCR)
+            if (b == Lf && foundCR)
             {
                 foundCRLF = true;
                 return;
             }
 
-            foundCR = b == CR;
+            foundCR = b == Cr;
         }
 
         private string DecodeLine(MemoryStream builder, bool foundCRLF)
