@@ -86,7 +86,7 @@ namespace HttpBatchHandler
                 {
                     HttpApplicationRequestSection section;
                     while ((section = await reader
-                               .ReadNextHttpApplicationRequestSectionAsync(pathBase, cancellationToken)
+                               .ReadNextHttpApplicationRequestSectionAsync(pathBase, httpContext.Request.IsHttps, cancellationToken)
                                .ConfigureAwait(false)) != null)
                     {
                         httpContext.RequestAborted.ThrowIfCancellationRequested();

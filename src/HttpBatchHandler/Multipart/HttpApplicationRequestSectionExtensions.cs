@@ -16,7 +16,7 @@ namespace HttpBatchHandler.Multipart
         private static readonly char[] SpaceArray = {' '};
 
         public static async Task<HttpApplicationRequestSection> ReadNextHttpApplicationRequestSectionAsync(
-            this MultipartReader reader, PathString pathBase = default, CancellationToken cancellationToken = default)
+            this MultipartReader reader, PathString pathBase = default, bool isHttps = false, CancellationToken cancellationToken = default)
         {
             var section = await reader.ReadNextSectionAsync(cancellationToken).ConfigureAwait(false);
             if (section == null)
@@ -53,7 +53,7 @@ namespace HttpBatchHandler.Multipart
                 throw new InvalidDataException("No Host Header");
             }
 
-            var uri = BuildUri(hostHeader, requestLineParts[1]);
+            var uri = BuildUri(isHttps, hostHeader, requestLineParts[1]);
             var fullPath = PathString.FromUriComponent(uri);
             var feature = new HttpRequestFeature
             {
@@ -81,7 +81,7 @@ namespace HttpBatchHandler.Multipart
             };
         }
 
-        private static Uri BuildUri(StringValues hostHeader, string pathAndQuery)
+        private static Uri BuildUri(bool isHttps, StringValues hostHeader, string pathAndQuery)
         {
             if (hostHeader.Count != 1)
             {
@@ -94,7 +94,8 @@ namespace HttpBatchHandler.Multipart
                 return null;
             }
 
-            var fullUri = $"http://{hostString.ToUriComponent()}{pathAndQuery}";
+            var scheme = isHttps ? "https" : "http";
+            var fullUri = $"{scheme}://{hostString.ToUriComponent()}{pathAndQuery}";
             var uri = new Uri(fullUri);
             return uri;
         }
