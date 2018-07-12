@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace HttpBatchHandler.Multipart
 {
@@ -30,7 +31,7 @@ namespace HttpBatchHandler.Multipart
 
         protected override async Task SerializeToStreamAsync(Stream stream, TransportContext context)
         {
-            using (var sb = new StreamWriter(stream, Encoding.ASCII, 8192, true))
+            using (var sb = new HttpResponseStreamWriter(stream, Encoding.ASCII))
             {
                 await sb.WriteAsync(_message.Method.Method).ConfigureAwait(false);
                 await sb.WriteAsync(' ').ConfigureAwait(false);

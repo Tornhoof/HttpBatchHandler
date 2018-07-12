@@ -2,24 +2,25 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.3.3</Version>
-    <AssemblyVersion>0.3.3.0</AssemblyVersion>
-    <FileVersion>0.3.3.0</FileVersion>
+    <Version>0.4</Version>
+    <AssemblyVersion>0.4.0.0</AssemblyVersion>
+    <FileVersion>0.4.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>HttpBatchHandler for ASP.NET Core 2.0 Contributors 2018</Copyright>
     <PackageId>HttpBatchHandler</PackageId>
     <Authors>HttpBatchHandler for ASP.NET Core 2.0 Contributors</Authors>
     <Company />
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <Product>HttpBatchHandler for ASP.NET Core 2.0</Product>
-    <Description>HttpBatchHandler for ASP.NET Core 2.0</Description>
+    <Product>HttpBatchHandler for ASP.NET Core 2.0+</Product>
+    <Description>HttpBatchHandler for ASP.NET Core 2.0+</Description>
     <PackageLicenseUrl>https://github.com/Tornhoof/HttpBatchHandler/blob/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/Tornhoof/HttpBatchHandler/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Tornhoof/HttpBatchHandler</RepositoryUrl>
     <RepositoryType>GitHub</RepositoryType>
     <PackageTags>HttpBatchHandler</PackageTags>
     <PackageReleaseNotes>An ASP.NET WebAPI 2 compatible BatchRequestHandler as described by:
-https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata </PackageReleaseNotes>
+https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata
+Replaced StreamWriter with HttpResponseStreamWriter</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
