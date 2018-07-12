@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.4</Version>
-    <AssemblyVersion>0.4.0.0</AssemblyVersion>
-    <FileVersion>0.4.0.0</FileVersion>
+    <Version>0.5</Version>
+    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <FileVersion>0.5.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Copyright>HttpBatchHandler for ASP.NET Core 2.0 Contributors 2018</Copyright>
     <PackageId>HttpBatchHandler</PackageId>
@@ -20,7 +20,7 @@
     <PackageTags>HttpBatchHandler</PackageTags>
     <PackageReleaseNotes>An ASP.NET WebAPI 2 compatible BatchRequestHandler as described by:
 https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata
-Replaced StreamWriter with HttpResponseStreamWriter</PackageReleaseNotes>
+Fix bad scheme propagation</PackageReleaseNotes>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
