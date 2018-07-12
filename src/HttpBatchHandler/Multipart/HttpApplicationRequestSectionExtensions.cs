@@ -94,7 +94,7 @@ namespace HttpBatchHandler.Multipart
                 return null;
             }
 
-            var scheme = isHttps ? "https" : "http";
+            var scheme = isHttps ? Uri.UriSchemeHttps : Uri.UriSchemeHttp;
             var fullUri = $"{scheme}://{hostString.ToUriComponent()}{pathAndQuery}";
             var uri = new Uri(fullUri);
             return uri;
