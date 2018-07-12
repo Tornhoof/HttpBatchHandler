@@ -46,7 +46,7 @@ namespace HttpBatchHandler.Multipart
 
         public async Task CopyToAsync(Stream stream, CancellationToken cancellationToken = default)
         {
-            using (var sb = new StreamWriter(stream, Encoding.ASCII, 8192, true))
+            using (var sb = new HttpResponseStreamWriter(stream, Encoding.ASCII))
             {
                 await sb.WriteAsync("Content-Type: application/http; msgtype=response").ConfigureAwait(false);
                 await sb.WriteAsync(Crlf).ConfigureAwait(false);
