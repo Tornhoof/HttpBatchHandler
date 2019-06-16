@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -13,10 +13,10 @@
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <Product>HttpBatchHandler for ASP.NET Core 2.0+</Product>
     <Description>HttpBatchHandler for ASP.NET Core 2.0+</Description>
-    <PackageLicenseUrl>https://github.com/Tornhoof/HttpBatchHandler/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Tornhoof/HttpBatchHandler/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Tornhoof/HttpBatchHandler</RepositoryUrl>
-    <RepositoryType>GitHub</RepositoryType>
+    <RepositoryType>git</RepositoryType>
     <PackageTags>HttpBatchHandler</PackageTags>
     <PackageReleaseNotes>An ASP.NET WebAPI 2 compatible BatchRequestHandler as described by:
 https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata
