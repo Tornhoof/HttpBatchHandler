@@ -7,6 +7,7 @@ namespace HttpBatchHandler.Website
     {
         public static IWebHost BuildWebHost(string[] args) => WebHost.CreateDefaultBuilder(args)
             .UseStartup<Startup>()
+            .UseUrls("http://*:5123")
             .Build();
 
         public static void Main(string[] args)
