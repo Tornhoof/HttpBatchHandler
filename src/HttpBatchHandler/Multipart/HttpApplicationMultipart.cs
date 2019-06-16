@@ -67,6 +67,7 @@ namespace HttpBatchHandler.Multipart
                 }
 
                 await sb.WriteAsync(Crlf).ConfigureAwait(false);
+                await sb.FlushAsync().ConfigureAwait(false);
             }
 
             if (_content != null)

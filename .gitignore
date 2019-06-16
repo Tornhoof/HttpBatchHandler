@@ -286,3 +286,5 @@ __pycache__/
 *.btm.cs
 *.odx.cs
 *.xsd.cs
+/test/HttpBatchHandler.Website/Published
+/test/HttpBatchHandler.Benchmarks/BenchmarkDotNet.Artifacts/results
