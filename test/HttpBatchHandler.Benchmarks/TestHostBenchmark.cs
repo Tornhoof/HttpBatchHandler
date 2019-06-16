@@ -11,13 +11,13 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace HttpBatchHandler.Benchmarks
 {
     [MemoryDiagnoser]
-    public class KestrelBenchmark
+    public class TestHostBenchmark
     {
-        private KestrelHost _kestrelHost;
+        private TestHost _kestrelHost;
         [GlobalSetup]
         public void GlobalSetup()
         {
-            _kestrelHost = new KestrelHost();
+            _kestrelHost = new TestHost();
         }
 
         [GlobalCleanup]

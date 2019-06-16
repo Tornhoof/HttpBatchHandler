@@ -5,7 +5,7 @@ namespace HttpBatchHandler.Benchmarks
 {
     internal class Program
     {
-        private static async Task Main(string[] args)
+        private static void Main(string[] args)
         {
             //KestrelBenchmark kb = new KestrelBenchmark();
             //kb.GlobalSetup();
