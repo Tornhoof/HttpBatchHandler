@@ -7,7 +7,6 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -80,40 +79,40 @@ namespace HttpBatchHandler.Benchmarks.Tools
         }
     }
 
-    public class TestHost : IDisposable
-    {
-        private readonly TestServer _disposable;
+    //public class TestHost : IDisposable
+    //{
+    //    private readonly TestServer _disposable;
 
-        public TestHost()
-        {
-            var builder = new WebHostBuilder()
-                .UseStartup<Startup>()
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                });
-            _disposable = new TestServer(builder);
-            HttpClient = _disposable.CreateClient();
-            HttpClient.BaseAddress = new Uri("http://localhost:5000");
-        }
+    //    public TestHost()
+    //    {
+    //        var builder = new WebHostBuilder()
+    //            .UseStartup<Startup>()
+    //            .ConfigureLogging(logging =>
+    //            {
+    //                logging.ClearProviders();
+    //            });
+    //        _disposable = new TestServer(builder);
+    //        HttpClient = _disposable.CreateClient();
+    //        HttpClient.BaseAddress = new Uri("http://localhost:5000");
+    //    }
 
-        public Uri BaseUri => HttpClient.BaseAddress;
+    //    public Uri BaseUri => HttpClient.BaseAddress;
 
-        public HttpClient HttpClient { get; }
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
+    //    public HttpClient HttpClient { get; }
+    //    public void Dispose()
+    //    {
+    //        Dispose(true);
+    //        GC.SuppressFinalize(this);
+    //    }
 
-        public virtual void Dispose(bool dispose)
-        {
-            if (dispose)
-            {
-                _disposable?.Dispose();
-                HttpClient?.Dispose();
-            }
-        }
-    }
+    //    public virtual void Dispose(bool dispose)
+    //    {
+    //        if (dispose)
+    //        {
+    //            _disposable?.Dispose();
+    //            HttpClient?.Dispose();
+    //        }
+    //    }
+    //}
 }
 #endif
