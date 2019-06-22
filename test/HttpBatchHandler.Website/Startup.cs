@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace HttpBatchHandler.Website
 {
@@ -18,7 +20,7 @@ namespace HttpBatchHandler.Website
         public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (_pathBase != "/")
             {
@@ -31,13 +33,15 @@ namespace HttpBatchHandler.Website
             }
 
             app.UseBatchMiddleware();
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(a => a.MapControllers());
         }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0).AddNewtonsoftJson();
+            services.AddControllers();
         }
     }
 }
