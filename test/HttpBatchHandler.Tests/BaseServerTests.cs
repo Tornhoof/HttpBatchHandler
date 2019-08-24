@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HttpBatchHandler.Multipart;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 using Xunit;
@@ -102,7 +103,8 @@ namespace HttpBatchHandler.Tests
                     StatusCode = section.ResponseFeature.StatusCode,
                     Headers = section.ResponseFeature.Headers
                 };
-                await batchResult.FillAsync(section.ResponseFeature.Body).ConfigureAwait(false);
+                var bodyFeature = Assert.IsAssignableFrom<IHttpResponseBodyFeature>(section.ResponseFeature);
+                await batchResult.FillAsync(bodyFeature.Stream).ConfigureAwait(false);
                 result.Add(batchResult);
             }
 
