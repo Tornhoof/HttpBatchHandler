@@ -103,8 +103,9 @@ namespace HttpBatchHandler.Tests
                     StatusCode = section.ResponseFeature.StatusCode,
                     Headers = section.ResponseFeature.Headers
                 };
-                var bodyFeature = Assert.IsAssignableFrom<IHttpResponseBodyFeature>(section.ResponseFeature);
-                await batchResult.FillAsync(bodyFeature.Stream).ConfigureAwait(false);
+#pragma warning disable 618
+                await batchResult.FillAsync(section.ResponseFeature.Body).ConfigureAwait(false);
+#pragma warning restore 618
                 result.Add(batchResult);
             }
 

@@ -25,10 +25,9 @@ namespace HttpBatchHandler
             contextFeatures.Set(requestFeature);
 
             _responseStream = new WriteOnlyResponseStream(AbortRequest);
-            _responseFeature = new ResponseFeature(requestFeature.Protocol, 200, null, _responseStream,
-                requestFeature.Headers) {Abort = Abort};
+            _responseFeature = new ResponseFeature(requestFeature.Protocol, 200, null, _responseStream, new HeaderDictionary()) {Abort = Abort};
             contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
-            contextFeatures.Set<IHttpResponseBodyFeature>(_responseFeature);
+            contextFeatures.Set<IHttpResponseBodyFeature>(new StreamResponseBodyFeature(_responseStream));
             var requestLifetimeFeature = new HttpRequestLifetimeFeature();
             contextFeatures.Set<IHttpRequestLifetimeFeature>(requestLifetimeFeature);
             requestLifetimeFeature.RequestAborted = _requestAbortedSource.Token;
