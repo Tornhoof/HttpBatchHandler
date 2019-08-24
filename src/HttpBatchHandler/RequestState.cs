@@ -23,14 +23,14 @@ namespace HttpBatchHandler
 
             var contextFeatures = new FeatureCollection(featureCollection);
             contextFeatures.Set(requestFeature);
-            _responseFeature = new ResponseFeature {Protocol = requestFeature.Protocol};
-            contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
-            var requestLifetimeFeature = new HttpRequestLifetimeFeature();
-            contextFeatures.Set<IHttpRequestLifetimeFeature>(requestLifetimeFeature);
 
             _responseStream = new WriteOnlyResponseStream(AbortRequest);
-            _responseFeature.Body = _responseStream;
-            _responseFeature.StatusCode = 200;
+            _responseFeature = new ResponseFeature(requestFeature.Protocol, 200, null, _responseStream,
+                requestFeature.Headers) {Abort = Abort};
+            contextFeatures.Set<IHttpResponseFeature>(_responseFeature);
+            contextFeatures.Set<IHttpResponseBodyFeature>(_responseFeature);
+            var requestLifetimeFeature = new HttpRequestLifetimeFeature();
+            contextFeatures.Set<IHttpRequestLifetimeFeature>(requestLifetimeFeature);
             requestLifetimeFeature.RequestAborted = _requestAbortedSource.Token;
 
             Context = _factory.Create(contextFeatures);

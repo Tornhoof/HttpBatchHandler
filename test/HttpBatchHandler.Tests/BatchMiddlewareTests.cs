@@ -52,7 +52,7 @@ namespace HttpBatchHandler.Tests
 
         private Task ReturnThis(HttpContext context, ResponseFeature responseFeature)
         {
-            context.Response.Body = responseFeature.Body;
+            context.Response.Body = responseFeature.Stream;
             foreach (var kval in responseFeature.Headers)
             {
                 context.Response.Headers.Add(kval);
