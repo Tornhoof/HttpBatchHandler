@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http.Features;
 
 namespace HttpBatchHandler
 {
-    internal class ResponseFeature : IHttpResponseFeature, IHttpResponseBodyFeature
+    internal class ResponseFeature : IHttpResponseFeature
     {
         private readonly HeaderDictionary _headers = new HeaderDictionary();
         private Func<Task> _responseCompletedAsync = () => Task.FromResult(true);
@@ -23,14 +23,6 @@ namespace HttpBatchHandler
             Body = content;
             Headers = headers;
         }
-
-        public ResponseFeature()
-        {
-            Headers = _headers;
-            StatusCode = 200;
-        }
-
-        public PipeWriter Writer { get; }
 
         public Stream Stream => Body;
 
@@ -97,27 +89,26 @@ namespace HttpBatchHandler
             }
         }
 
-        public Task CompleteAsync() => Writer.CompleteAsync().AsTask();
 
-        public void DisableBuffering()
-        {
-        }
+        //public void DisableBuffering()
+        //{
+        //}
 
-        public Task SendFileAsync(string path, long offset, long? count,
-            CancellationToken cancellationToken = default) =>
-            SendFileFallback.SendFileAsync(Stream, path, offset, count, cancellationToken);
+        //public Task SendFileAsync(string path, long offset, long? count,
+        //    CancellationToken cancellationToken = default) =>
+        //    SendFileFallback.SendFileAsync(Stream, path, offset, count, cancellationToken);
 
-        public async Task StartAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                await FireOnSendingHeadersAsync();
-            }
-            catch (Exception ex)
-            {
-                Abort?.Invoke(ex);
-                throw;
-            }
-        }
+        //public async Task StartAsync(CancellationToken cancellationToken = default)
+        //{
+        //    try
+        //    {
+        //        await FireOnSendingHeadersAsync();
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Abort?.Invoke(ex);
+        //        throw;
+        //    }
+        //}
     }
 }
