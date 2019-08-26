@@ -10,7 +10,6 @@ namespace HttpBatchHandler
 {
     internal class ResponseFeature : IHttpResponseFeature
     {
-        private readonly HeaderDictionary _headers = new HeaderDictionary();
         private Func<Task> _responseCompletedAsync = () => Task.FromResult(true);
         private Func<Task> _responseStartingAsync = () => Task.FromResult(true);
 
@@ -84,31 +83,12 @@ namespace HttpBatchHandler
                 finally
                 {
                     HasStarted = true;
-                    _headers.IsReadOnly = true;
+                    if (Headers is HeaderDictionary hd)
+                    {
+                        hd.IsReadOnly = true;
+                    }
                 }
             }
         }
-
-
-        //public void DisableBuffering()
-        //{
-        //}
-
-        //public Task SendFileAsync(string path, long offset, long? count,
-        //    CancellationToken cancellationToken = default) =>
-        //    SendFileFallback.SendFileAsync(Stream, path, offset, count, cancellationToken);
-
-        //public async Task StartAsync(CancellationToken cancellationToken = default)
-        //{
-        //    try
-        //    {
-        //        await FireOnSendingHeadersAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Abort?.Invoke(ex);
-        //        throw;
-        //    }
-        //}
     }
 }
