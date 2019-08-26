@@ -222,7 +222,7 @@ namespace HttpBatchHandler.Tests
         [Fact]
         public async Task Performance()
         {
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 100; i++)
             {
                 var sw = new Stopwatch();
                 sw.Start();
