@@ -16,7 +16,8 @@ namespace HttpBatchHandler.Multipart
         public HttpApplicationContent(HttpRequestMessage message)
         {
             _message = message;
-            Headers.ContentType = MediaTypeHeaderValue.Parse("application/http; msgtype=request");
+            Headers.ContentType = new MediaTypeHeaderValue("application/http");
+            Headers.ContentType.Parameters.Add(new NameValueHeaderValue("msgtype","request"));
         }
 
         protected override void Dispose(bool disposing)

@@ -72,7 +72,7 @@ namespace HttpBatchHandler.Multipart
 
             if (_content != null)
             {
-                await _content.CopyToAsync(stream).ConfigureAwait(false);
+                await _content.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
             }
         }
 
