@@ -24,12 +24,15 @@ namespace HttpBatchHandler.Tests
         private readonly BatchMiddlewareTestFixture _fixture;
 
         private async Task AssertExecution(IHttpRequestFeature requestFeature, IHttpResponseFeature responseFeature,
+            Stream responseStream,
             BatchMiddlewareEvents batchMiddlewareEvents,
             params ResponseFeature[] responseFeatures)
         {
             var featureCollection = new FeatureCollection();
             featureCollection.Set(requestFeature);
             featureCollection.Set(responseFeature);
+            IHttpResponseBodyFeature responseBodyFeature = new StreamResponseBodyFeature(responseStream);
+            featureCollection.Set(responseBodyFeature);
             var defaultContext = new DefaultHttpContext(featureCollection);
             var middleware = CreateMiddleware(CreateRequestDelegate(responseFeatures), batchMiddlewareEvents);
             await middleware.Invoke(defaultContext).ConfigureAwait(false);
@@ -50,9 +53,9 @@ namespace HttpBatchHandler.Tests
             return requestDelegate;
         }
 
-        private Task ReturnThis(HttpContext context, ResponseFeature responseFeature)
+        private async Task ReturnThis(HttpContext context, ResponseFeature responseFeature)
         {
-            context.Response.Body = responseFeature.Body;
+            await responseFeature.Stream.CopyToAsync(context.Response.Body).ConfigureAwait(false);
             foreach (var kval in responseFeature.Headers)
             {
                 context.Response.Headers.Add(kval);
@@ -61,7 +64,6 @@ namespace HttpBatchHandler.Tests
             context.Response.StatusCode = responseFeature.StatusCode;
             context.Response.HttpContext.Features.Get<IHttpResponseFeature>().ReasonPhrase =
                 responseFeature.ReasonPhrase;
-            return Task.CompletedTask;
         }
 
 
@@ -173,7 +175,7 @@ namespace HttpBatchHandler.Tests
             var mockedEvents = new ThrowExceptionEventHandler();
             using (responseFeature.Body = new MemoryStream())
             {
-                await AssertExecution(requestFeature, responseFeature, mockedEvents,
+                await AssertExecution(requestFeature, responseFeature, responseFeature.Body, mockedEvents,
                     CreateFirstResponse(),
                     CreateSecondResponse(),
                     CreateThirdResponse(),
@@ -198,7 +200,7 @@ namespace HttpBatchHandler.Tests
             var mockedEvents = new MockedBatchEventHandler();
             using (responseFeature.Body = new MemoryStream())
             {
-                await AssertExecution(requestFeature, responseFeature, mockedEvents,
+                await AssertExecution(requestFeature, responseFeature, responseFeature.Body, mockedEvents,
                     CreateFirstResponse(),
                     CreateInternalServerResponse(),
                     CreateThirdResponse(),
@@ -222,7 +224,7 @@ namespace HttpBatchHandler.Tests
             var mockedEvents = new MockedBatchEventHandler();
             using (responseFeature.Body = new MemoryStream())
             {
-                await AssertExecution(requestFeature, responseFeature, mockedEvents,
+                await AssertExecution(requestFeature, responseFeature, responseFeature.Body, mockedEvents,
                     CreateFirstResponse(),
                     CreateSecondResponse(),
                     CreateThirdResponse(),
@@ -243,7 +245,7 @@ namespace HttpBatchHandler.Tests
             var mockedEvents = new MockedBatchEventHandler();
             using (responseFeature.Body = new MemoryStream())
             {
-                await AssertExecution(requestFeature, responseFeature, mockedEvents,
+                await AssertExecution(requestFeature, responseFeature, responseFeature.Body, mockedEvents,
                     CreateFirstResponse(),
                     CreateSecondResponse(),
                     CreateThirdResponse(),
@@ -276,7 +278,7 @@ namespace HttpBatchHandler.Tests
             var mockedEvents = new MockedBatchEventHandler();
             using (responseFeature.Body = new MemoryStream())
             {
-                await AssertExecution(requestFeature, responseFeature, mockedEvents,
+                await AssertExecution(requestFeature, responseFeature, responseFeature.Body, mockedEvents,
                     CreateFirstResponse(),
                     CreateSecondResponse(),
                     CreateThirdResponse(),

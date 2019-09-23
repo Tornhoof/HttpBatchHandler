@@ -48,14 +48,7 @@ namespace HttpBatchHandler.Multipart
             var headers = await SectionHelper.ReadHeadersAsync(bufferedStream, cancellationToken).ConfigureAwait(false);
             return new HttpApplicationResponseSection
             {
-                ResponseFeature = new ResponseFeature
-                {
-                    Body = bufferedStream,
-                    Protocol = responseLine[0],
-                    StatusCode = int.Parse(responseLine[1]),
-                    ReasonPhrase = responseLine[2],
-                    Headers = new HeaderDictionary(headers)
-                }
+                ResponseFeature = new ResponseFeature(responseLine[0], int.Parse(responseLine[1]), responseLine[2], bufferedStream, new HeaderDictionary(headers))
             };
         }
 

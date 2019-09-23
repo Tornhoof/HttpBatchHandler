@@ -16,7 +16,7 @@ namespace HttpBatchHandler.Multipart
         private readonly string _reasonPhrase;
 
         internal HttpApplicationMultipart(ResponseFeature responseFeature) : this(responseFeature.Protocol,
-            responseFeature.StatusCode, responseFeature.ReasonPhrase, responseFeature.Body, responseFeature.Headers)
+            responseFeature.StatusCode, responseFeature.ReasonPhrase, responseFeature.Stream, responseFeature.Headers)
         {
         }
 
@@ -72,7 +72,7 @@ namespace HttpBatchHandler.Multipart
 
             if (_content != null)
             {
-                await _content.CopyToAsync(stream).ConfigureAwait(false);
+                await _content.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
             }
         }
 

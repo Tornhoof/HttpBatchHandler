@@ -1,18 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.5</Version>
-    <AssemblyVersion>0.5.0.0</AssemblyVersion>
-    <FileVersion>0.5.0.0</FileVersion>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <Version>0.8</Version>
+    <AssemblyVersion>0.8.0.0</AssemblyVersion>
+    <FileVersion>0.8.0.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Copyright>HttpBatchHandler for ASP.NET Core 2.0 Contributors 2018</Copyright>
+    <Copyright>HttpBatchHandler for ASP.NET Core 3.0 Contributors 2019</Copyright>
     <PackageId>HttpBatchHandler</PackageId>
-    <Authors>HttpBatchHandler for ASP.NET Core 2.0 Contributors</Authors>
+    <Authors>HttpBatchHandler for ASP.NET Core 3.0 Contributors</Authors>
     <Company />
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
-    <Product>HttpBatchHandler for ASP.NET Core 2.0+</Product>
-    <Description>HttpBatchHandler for ASP.NET Core 2.0+</Description>
+    <Product>HttpBatchHandler for ASP.NET Core 3.0+</Product>
+    <Description>HttpBatchHandler for ASP.NET Core 3.0+</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/Tornhoof/HttpBatchHandler/</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Tornhoof/HttpBatchHandler</RepositoryUrl>
@@ -21,24 +21,11 @@
     <PackageReleaseNotes>An ASP.NET WebAPI 2 compatible BatchRequestHandler as described by:
 https://blogs.msdn.microsoft.com/webdev/2013/11/01/introducing-batch-support-in-web-api-and-web-api-odata
 Fix bad scheme propagation</PackageReleaseNotes>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <LangVersion>latest</LangVersion>
-    <DocumentationFile>bin\Release\netstandard2.0\HttpBatchHandler.xml</DocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\netstandard2.0\HttpBatchHandler.xml</DocumentationFile>
     <NoWarn>1701;1702;1705;1591</NoWarn>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.Abstractions" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Hosting.Server.Abstractions" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Extensions" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http.Features" Version="2.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="2.0.0" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 </Project>

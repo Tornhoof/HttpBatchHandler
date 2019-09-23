@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using HttpBatchHandler.Multipart;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Net.Http.Headers;
 using Xunit;
@@ -102,7 +103,9 @@ namespace HttpBatchHandler.Tests
                     StatusCode = section.ResponseFeature.StatusCode,
                     Headers = section.ResponseFeature.Headers
                 };
+#pragma warning disable 618
                 await batchResult.FillAsync(section.ResponseFeature.Body).ConfigureAwait(false);
+#pragma warning restore 618
                 result.Add(batchResult);
             }
 
@@ -219,7 +222,7 @@ namespace HttpBatchHandler.Tests
         [Fact]
         public async Task Performance()
         {
-            for (var i = 0; i < 10; i++)
+            for (var i = 0; i < 100; i++)
             {
                 var sw = new Stopwatch();
                 sw.Start();

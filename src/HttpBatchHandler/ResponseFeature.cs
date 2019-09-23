@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.IO.Pipelines;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Features;
@@ -21,15 +23,15 @@ namespace HttpBatchHandler
             Headers = headers;
         }
 
-        public ResponseFeature()
-        {
-        }
+        public Stream Stream => Body;
+
+        public Action<Exception> Abort { get; set; }
 
         public Stream Body { get; set; }
 
         public bool HasStarted { get; private set; }
 
-        public IHeaderDictionary Headers { get; set; } = new HeaderDictionary();
+        public IHeaderDictionary Headers { get; set; }
 
         public string Protocol { get; set; }
 
@@ -72,8 +74,21 @@ namespace HttpBatchHandler
 
         public async Task FireOnSendingHeadersAsync()
         {
-            await _responseStartingAsync().ConfigureAwait(false);
-            HasStarted = true;
+            if (!HasStarted)
+            {
+                try
+                {
+                    await _responseStartingAsync().ConfigureAwait(false);
+                }
+                finally
+                {
+                    HasStarted = true;
+                    if (Headers is HeaderDictionary hd)
+                    {
+                        hd.IsReadOnly = true;
+                    }
+                }
+            }
         }
     }
 }
