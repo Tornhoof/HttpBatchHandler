@@ -13,5 +13,27 @@ variables:
   buildConfiguration: 'Release'
 
 steps:
+- task: DotNetCoreInstaller@1
+  inputs:
+    version: '3.0.100'
+- script: dotnet restore
+  displayName: 'dotnet restore'
 - script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+- script: dotnet test -c Release test/HttpBatchHandler.Tests/HttpBatchHandler.Tests.csproj --logger trx --collect "Code coverage"
+  displayName: 'dotnet test'  
+- task: PublishTestResults@2
+  inputs:
+    testRunner: VSTest
+    testResultsFiles: '**/*.trx'  
+- task: CopyFiles@2
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)'
+    Contents: '**/$(buildConfiguration)/**/*.nupkg'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    CleanTargetFolder: true
+    flattenFolders: true
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'nuget'
+    publishLocation: 'Container'  
