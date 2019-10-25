@@ -12,11 +12,13 @@ namespace HttpBatchHandler.Multipart
         private readonly byte[] _endBoundary;
         private readonly Queue<IMultipart> _parts = new Queue<IMultipart>();
         private readonly byte[] _startBoundary;
+        private readonly byte[] _crlf;
 
         public MultipartWriter(string subType, string boundary)
         {
-            _startBoundary = Encoding.ASCII.GetBytes($"\r\n--{boundary}\r\n");
-            _endBoundary = Encoding.ASCII.GetBytes($"\r\n--{boundary}--\r\n");
+            _startBoundary = Encoding.ASCII.GetBytes($"--{boundary}\r\n");
+            _endBoundary = Encoding.ASCII.GetBytes($"--{boundary}--\r\n");
+            _crlf = Encoding.ASCII.GetBytes("\r\n");
 
             ContentType = $"multipart/{subType}; boundary=\"{boundary}\"";
         }
@@ -43,6 +45,7 @@ namespace HttpBatchHandler.Multipart
                     await stream.WriteAsync(_startBoundary, 0, _startBoundary.Length, cancellationToken)
                         .ConfigureAwait(false);
                     await part.CopyToAsync(stream, cancellationToken).ConfigureAwait(false);
+                    await stream.WriteAsync(_crlf, 0, _crlf.Length, cancellationToken).ConfigureAwait(false);
                 }
             }
 
