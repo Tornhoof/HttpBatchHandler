@@ -1,5 +1,5 @@
 # HttpBatchHandler
-HttpBatchHandler for  ASP .NET Core 2.0
+HttpBatchHandler for  ASP .NET Core 3.0
 
 ## Currently working
 - Customization of batch handler by OnXXXEvents
