@@ -8,3 +8,6 @@ HttpBatchHandler for  ASP .NET Core 3.0
 ## TODO
 - Edge case error handling
 - The library should be probably split into two parts, one for the requests and one for the actual batchhandler
+
+## Deprectaed
+See https://github.com/Tornhoof/HttpBatchHandler/issues/29 for thoughts about a better, less coupled approach.
